@@ -1,0 +1,188 @@
+---
+import { Image } from 'astro:assets';
+import farmerWheat from '../assets/photos/farmer-wheat.jpg';
+---
+
+<section class="about" id="acerca" aria-labelledby="about-title">
+  <div class="about__panel on-dark" data-reveal>
+    <div class="about__grid">
+      <h2 id="about-title">La señal se firma donde nace.</h2>
+
+      <div class="about__text">
+        <div class="about__block">
+          <h3>Por qué existe</h3>
+          <p>
+            Un número sin firma no demuestra de dónde viene. Cada lectura se verifica
+            antes de convertirse en una decisión sobre el suelo.
+          </p>
+        </div>
+        <div class="about__block">
+          <h3>Cómo trabajamos</h3>
+          <p>
+            Reglas agronómicas explicables, demo declarada y ninguna cifra de cliente
+            inventada. Si falta evidencia, se dice.
+          </p>
+        </div>
+        <a
+          class="button button--light about__cta"
+          href="/demo"
+          data-event="cta_demo_click"
+          data-event-placement="about"
+        >Solicitar una demo</a>
+      </div>
+    </div>
+
+    <figure class="about__figure core-photo">
+      <Image
+        src={farmerWheat}
+        alt="Agricultor examinando una espiga de trigo en su campo."
+        widths={[400, 640, 900]}
+        sizes="(max-width: 900px) 86vw, 38vw"
+        loading="lazy"
+        decoding="async"
+        quality={80}
+      />
+      <figcaption class="sr">
+        Fotografía de USDA NRCS Texas, dominio público. Créditos completos en la página
+        de créditos.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<style>
+  .about {
+    padding: 20px;
+    background: var(--as-bg);
+  }
+
+  .about__panel {
+    position: relative;
+    min-height: clamp(720px, 110svh, 980px);
+    padding: 56px;
+    overflow: hidden;
+    border-radius: var(--as-radius-sm);
+    background: var(--as-accent);
+    color: var(--as-bg);
+  }
+
+  .about__grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
+    gap: clamp(40px, 8vw, 120px);
+  }
+
+  .about h2 {
+    max-width: 11ch;
+    font-size: clamp(2.5rem, 4.4vw, 4rem);
+    line-height: 0.94;
+  }
+
+  .about__text {
+    display: grid;
+    gap: 48px;
+    align-content: start;
+    margin-top: 4px;
+  }
+
+  .about__block h3 {
+    font-size: 1.375rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  .about__block p {
+    margin-top: 9px;
+    color: #d6ded0;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .about__cta {
+    justify-self: start;
+    margin-top: 8px;
+  }
+
+  .about__figure {
+    position: absolute;
+    bottom: -16%;
+    left: 56px;
+    z-index: 1;
+    width: min(38%, 520px);
+    aspect-ratio: 3 / 4;
+    margin: 0;
+  }
+
+  @media (max-width: 1050px) {
+    .about__panel {
+      padding: 44px;
+    }
+
+    .about__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
+      gap: 48px;
+    }
+
+    .about__figure {
+      left: 44px;
+      width: min(42%, 430px);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .about {
+      padding: 10px;
+    }
+
+    .about__panel {
+      min-height: 0;
+      padding: 32px 26px 0;
+    }
+
+    .about__grid {
+      display: block;
+    }
+
+    .about h2 {
+      max-width: 13ch;
+      font-size: clamp(2.3rem, 8.5vw, 3.5rem);
+    }
+
+    .about__text {
+      gap: 30px;
+      margin-top: 42px;
+    }
+
+    .about__block p {
+      font-size: 1rem;
+    }
+
+    .about__cta {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .about__figure {
+      position: static;
+      width: 86%;
+      max-width: 460px;
+      margin: 44px auto -24vw;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .about__panel {
+      padding: 26px 20px 0;
+    }
+
+    .about h2 {
+      font-size: 2.2rem;
+    }
+
+    .about__figure {
+      margin-bottom: -18vw;
+    }
+  }
+</style>

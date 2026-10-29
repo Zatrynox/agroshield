@@ -1,0 +1,13 @@
+packages:
+  - backend
+  - frontend
+  - landing
+  - packages/*
+
+allowBuilds:
+  esbuild: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - '@node-rs/argon2'
+  - sharp

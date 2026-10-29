@@ -1,0 +1,134 @@
+---
+import LegalLayout from '../layouts/LegalLayout.astro';
+import { hasRealEmail, legalAddress, legalEntity, supportEmail } from '../lib/site';
+---
+
+<LegalLayout
+  title="Política de privacidad"
+  description="Qué datos trata AgroShield en el sitio público, para qué se usan, cuánto se conservan y cómo ejercer tus derechos."
+  path="/privacidad"
+>
+  <p class="prose__lede">
+    Esta política explica qué datos trata AgroShield en el sitio público y en la
+    solicitud de demo. La aplicación comparte los mismos principios, con la sesión
+    y el aislamiento por organización como piezas adicionales.
+  </p>
+
+  <h2>Quién es el responsable</h2>
+  <p>
+    El responsable del tratamiento es <strong>{legalEntity}</strong>{legalAddress ? `, con domicilio en ${legalAddress}` : ''}.
+    {hasRealEmail
+      ? ` Puedes escribir a ${supportEmail}.`
+      : ' Puedes contactar a través del formulario de demo indicando «Protección de datos» en el mensaje.'}
+  </p>
+  <p>
+    El domicilio y los datos registrales completos se configuran por entorno antes
+    de la puesta en producción. Esta página no inventa una sociedad ni una dirección.
+  </p>
+
+  <h2>Qué datos tratamos</h2>
+
+  <h3>Solicitudes de demo</h3>
+  <p>
+    Cuando envías el formulario tratamos nombre, correo, empresa o entidad, teléfono
+    (opcional), mensaje, consentimiento, origen de la solicitud y fecha. Para limitar
+    el abuso, la API guarda un hash de la dirección IP y el user-agent de la petición;
+    la IP no se almacena en claro.
+  </p>
+
+  <h3>Analítica del sitio</h3>
+  <p>
+    Solo si aceptas la analítica registramos el nombre del evento, la ruta visitada,
+    una o varias propiedades acotadas (por ejemplo, desde qué botón se solicitó una
+    demo) y la fecha. No se guardan cookies de terceros, direcciones IP ni
+    identificadores publicitarios. Si rechazas, no se envía ningún evento.
+  </p>
+
+  <h3>Seguridad y funcionamiento</h3>
+  <p>
+    El desafío anti-spam guarda un hash del desafío, su caducidad y la marca de uso
+    para impedir que se reutilice. Si inicias sesión en la aplicación, se guardan el
+    hash del token de sesión, el token CSRF, el user-agent, un hash de la IP y la
+    fecha de caducidad. La contraseña se almacena con Argon2id, nunca en claro.
+  </p>
+
+  <h2>Para qué y con qué base legal</h2>
+  <ul>
+    <li>
+      <strong>Responder a tu solicitud de demo:</strong> consentimiento y medidas
+      precontractuales a petición tuya.
+    </li>
+    <li>
+      <strong>Analítica propia:</strong> consentimiento, que puedes retirar en
+      cualquier momento desde la página de cookies.
+    </li>
+    <li>
+      <strong>Seguridad y prevención de abuso:</strong> interés legítimo en proteger
+      el servicio y a las personas usuarias.
+    </li>
+  </ul>
+  <p>
+    No usamos estos datos para decisiones automatizadas con efectos jurídicos ni para
+    elaborar perfiles publicitarios. No vendemos datos ni los cedemos a terceros con
+    fines comerciales.
+  </p>
+
+  <h2>Cuánto tiempo los conservamos</h2>
+  <ul>
+    <li>Solicitudes de demo: hasta 12 meses desde la última interacción.</li>
+    <li>Analítica: hasta 12 meses desde el evento.</li>
+    <li>Desafíos anti-spam: caducan a los 10 minutos; el registro de uso impide la reutilización.</li>
+    <li>Sesiones de la aplicación: la duración configurada, 8 horas por defecto.</li>
+  </ul>
+  <p>
+    Después se suprimen o se anonimizan. Si existe una obligación legal de conservar
+    un dato, se mantendrá únicamente durante el plazo exigido.
+  </p>
+
+  <h2>Destinatarios y alojamiento</h2>
+  <p>
+    No se ceden datos a terceros con fines comerciales. Los proveedores técnicos
+    necesarios (alojamiento, correo transaccional) actúan como encargados del
+    tratamiento y deben ofrecer garantías contractuales. El sitio no carga recursos
+    de terceros para analítica ni publicidad.
+  </p>
+  <p>
+    El proveedor de alojamiento definitivo se documentará antes de la puesta en
+    producción. Si se ubicara fuera del Espacio Económico Europeo, se aplicarían
+    garantías equivalentes conforme al RGPD.
+  </p>
+
+  <h2>Cómo ejercer tus derechos</h2>
+  <p>
+    Puedes solicitar acceso, rectificación, supresión, oposición, limitación y
+    portabilidad, así como retirar el consentimiento. Envía la solicitud desde el
+    formulario de demo indicando «Protección de datos»; si hay un correo de contacto
+    configurado, también puedes usarlo.
+  </p>
+  <p>
+    Responderemos en el plazo legal aplicable. Si consideras que no hemos atendido
+    correctamente tu solicitud, puedes reclamar ante la Agencia Española de
+    Protección de Datos (AEPD).
+  </p>
+
+  <h2>Seguridad</h2>
+  <p>
+    Aplicamos Argon2id para contraseñas, cookies HttpOnly y SameSite, CSRF en
+    operaciones autenticadas, límites de peticiones, aislamiento por organización y
+    claves de sensor firmadas con Ed25519. En producción se exige HTTPS y HSTS.
+    Ningún sistema es infalible: si detectas una vulnerabilidad, comunícala por el
+    canal de contacto sin publicar datos de terceros.
+  </p>
+
+  <h2>Menores</h2>
+  <p>
+    Este sitio no está dirigido a menores de 14 años. Si detectamos datos de un menor
+    sin base legal para tratarlos, los suprimiremos.
+  </p>
+
+  <h2>Cambios en esta política</h2>
+  <p>
+    Si cambiamos el tratamiento de forma material, actualizaremos esta página y
+    avisaremos en el sitio. La fecha de la última actualización aparece al principio.
+  </p>
+</LegalLayout>

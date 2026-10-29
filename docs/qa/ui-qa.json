@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-10-29T01:01:23.109Z",
+  "checks": [
+    "landing hero renders",
+    "landing has one primary demo CTA",
+    "login link is discreet",
+    "landing desktop has no horizontal overflow",
+    "no analytics request before consent",
+    "consent banner is shown initially",
+    "rejecting consent hides the banner",
+    "rejection persists after reload",
+    "rejection sends no analytics",
+    "hero demo acknowledges in place",
+    "how-it-works switches to the alert stage",
+    "FAQ accordion opens",
+    "showcase control changes state",
+    "accepting consent sends a page view",
+    "accepted analytics payload has consent true",
+    "rejection is not reported to the server",
+    "demo desktop has no horizontal overflow",
+    "empty form shows validation errors",
+    "invalid submit moves focus to the first field",
+    "demo form submits to the API",
+    "success page appears only after 201",
+    "success page shows a safe reference",
+    "demo login opens the protected panel",
+    "dashboard desktop has no horizontal overflow",
+    "dashboard exposes farm deep links",
+    "farm detail loads",
+    "farm detail exposes zone links",
+    "zone detail loads",
+    "alert queue loads",
+    "alert acknowledgment persists in the UI",
+    "acknowledgment survives reload",
+    "landing detects the active session without exposing tokens",
+    "expired session redirects to login with a reason",
+    "offline state is explicit, not simulated success",
+    "landing 320 has no horizontal overflow",
+    "demo 320 has no horizontal overflow",
+    "dashboard 320 has no horizontal overflow",
+    "alerts 320 has no horizontal overflow",
+    "zone 320 has no horizontal overflow"
+  ],
+  "axe": [
+    {
+      "name": "landing-home",
+      "violations": []
+    },
+    {
+      "name": "landing-demo",
+      "violations": []
+    },
+    {
+      "name": "app-login",
+      "violations": []
+    },
+    {
+      "name": "app-dashboard",
+      "violations": []
+    },
+    {
+      "name": "app-zone",
+      "violations": []
+    },
+    {
+      "name": "app-alerts",
+      "violations": []
+    }
+  ],
+  "consoleErrors": [
+    "landing: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "landing: Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "landing: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "landing: Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "landing: Failed to load resource: the server responded with a status of 403 (Forbidden)"
+  ],
+  "failedRequests": []
+}

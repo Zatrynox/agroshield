@@ -1,0 +1,153 @@
+---
+import { faqItems } from '../lib/faq';
+---
+
+<section class="faq section" id="preguntas" aria-labelledby="faq-title">
+  <div class="container faq__grid">
+    <header class="faq__intro" data-reveal>
+      <h2 class="section-heading" id="faq-title">Preguntas antes de empezar.</h2>
+      <p class="section-lead">
+        Lo que no está resuelto también se dice. Si falta algo, pregúntanos en la demo.
+      </p>
+    </header>
+
+    <div class="faq__list" data-reveal>
+      {faqItems.map((item) => (
+        <details class="faq__item" name="agroshield-faq">
+          <summary>
+            <span>{item.question}</span>
+            <span class="faq__plus" aria-hidden="true"><span></span><span></span></span>
+          </summary>
+          <p>{item.answer}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: clamp(36px, 6vw, 88px);
+  }
+
+  .faq__intro {
+    position: sticky;
+    top: 108px;
+    align-self: start;
+  }
+
+  .faq__list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .faq__item {
+    border-radius: var(--as-radius-sm);
+    background: var(--as-surface);
+    color: var(--as-ink);
+  }
+
+  .faq__item[open] {
+    background: var(--as-accent);
+    color: var(--as-bg);
+  }
+
+  .faq__item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-height: 72px;
+    padding: 14px 24px;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .faq__item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__plus {
+    position: relative;
+    display: block;
+    flex: none;
+    width: 16px;
+    height: 16px;
+  }
+
+  .faq__plus span {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 16px;
+    height: 3px;
+    border-radius: 1px;
+    background: currentColor;
+    transform: translateY(-50%);
+    transition: transform var(--as-base) var(--as-ease-out);
+  }
+
+  .faq__plus span:last-child {
+    transform: translateY(-50%) rotate(90deg);
+  }
+
+  .faq__item[open] .faq__plus span:last-child {
+    transform: translateY(-50%) rotate(0deg);
+  }
+
+  .faq__item p {
+    max-width: 52ch;
+    padding: 0 24px 24px;
+    color: #e8e4d8;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+
+  .faq__item[open] p {
+    animation: faq-in 180ms var(--as-ease-out) both;
+  }
+
+  @keyframes faq-in {
+    from {
+      opacity: 0;
+      transform: translateY(-3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .faq__grid {
+      display: block;
+    }
+
+    .faq__intro {
+      position: static;
+      max-width: 32rem;
+    }
+
+    .faq__list {
+      gap: 6px;
+      margin-top: 34px;
+    }
+
+    .faq__item summary {
+      min-height: 64px;
+      padding: 14px 20px;
+      font-size: 1.125rem;
+    }
+
+    .faq__item p {
+      padding: 0 20px 20px;
+      font-size: 1rem;
+    }
+  }
+</style>

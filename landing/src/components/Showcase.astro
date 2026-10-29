@@ -1,0 +1,187 @@
+---
+---
+
+<section class="showcase on-dark" aria-labelledby="showcase-title" data-showcase>
+  <div class="showcase__copy">
+    <h2 id="showcase-title">Alerta <span data-showcase-word>abierta</span>.</h2>
+    <p>
+      Reconocer registra quién actuó y cuándo. No borra el aviso original ni oculta
+      la cuenta atrás del historial.
+    </p>
+  </div>
+
+  <button
+    class="showcase__control"
+    type="button"
+    aria-pressed="false"
+    data-showcase-control
+    data-ui
+  >
+    <span class="showcase__label">Estado</span>
+    <span class="showcase__state" data-showcase-state>Alerta abierta</span>
+    <span class="showcase__action" data-showcase-action>Reconocer</span>
+    <span class="showcase__note">Vista de ejemplo · el control responde en tu navegador</span>
+  </button>
+
+  <noscript>
+    <p class="showcase__noscript">El control interactivo necesita JavaScript.</p>
+  </noscript>
+</section>
+
+<script>
+  const section = document.querySelector<HTMLElement>('[data-showcase]');
+  const control = document.querySelector<HTMLButtonElement>('[data-showcase-control]');
+  const word = document.querySelector<HTMLElement>('[data-showcase-word]');
+  const state = document.querySelector<HTMLElement>('[data-showcase-state]');
+  const action = document.querySelector<HTMLElement>('[data-showcase-action]');
+
+  if (section && control && word && state && action) {
+    control.addEventListener('click', () => {
+      const acknowledged = section.classList.toggle('is-ack');
+      control.setAttribute('aria-pressed', String(acknowledged));
+      word.textContent = acknowledged ? 'reconocida' : 'abierta';
+      state.textContent = acknowledged ? 'Alerta reconocida' : 'Alerta abierta';
+      action.textContent = acknowledged ? 'Reabrir demo' : 'Reconocer';
+    });
+  }
+</script>
+
+<style>
+  .showcase {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 92svh;
+    padding: clamp(40px, 5vw, 64px) var(--as-margin);
+    overflow: hidden;
+    background: var(--as-accent);
+    color: var(--as-bg);
+    transition: background-color 420ms var(--as-ease-out);
+  }
+
+  .showcase.is-ack {
+    background: var(--as-clay);
+  }
+
+  .showcase__copy {
+    position: relative;
+    z-index: 2;
+    max-width: 38ch;
+  }
+
+  .showcase h2 {
+    max-width: 12ch;
+    font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+    line-height: 1;
+  }
+
+  .showcase__copy p {
+    max-width: 34ch;
+    margin-top: 14px;
+    color: #e8e4d8;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+  }
+
+  .showcase__control {
+    position: absolute;
+    right: -8%;
+    bottom: -10%;
+    z-index: 1;
+    display: grid;
+    width: 7.2em;
+    padding: 0.4em 0.5em 0.48em;
+    border: 0;
+    border-radius: var(--as-radius-sm);
+    background: #fbf9f1;
+    color: var(--as-ink);
+    font-size: clamp(3rem, 8vw, 7.25rem);
+    line-height: 1;
+    text-align: left;
+    transition:
+      background-color var(--as-base) var(--as-ease-out),
+      transform var(--as-base) var(--as-ease-out);
+  }
+
+  .showcase__control:hover {
+    background: #fffdf7;
+  }
+
+  .showcase__control:active {
+    transform: translateY(1px);
+  }
+
+  .showcase__label {
+    font-size: max(0.28em, 13px);
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .showcase__state {
+    margin-top: 0.12em;
+    font-size: 0.92em;
+    font-weight: 600;
+    letter-spacing: -0.055em;
+    line-height: 0.96;
+  }
+
+  .showcase__action {
+    margin-top: 0.34em;
+    font-size: max(0.44em, 18px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .showcase__note {
+    margin-top: 0.4em;
+    padding-top: 0.32em;
+    border-top: 1px solid #ddd6c5;
+    color: var(--as-muted);
+    font-size: max(0.135em, 13px);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.3;
+  }
+
+  .showcase__noscript {
+    position: relative;
+    z-index: 2;
+    max-width: 34ch;
+    margin-top: auto;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 760px) {
+    .showcase {
+      min-height: 86svh;
+      padding-top: 32px;
+    }
+
+    .showcase h2 {
+      font-size: 1.625rem;
+    }
+
+    .showcase__copy p {
+      max-width: 32ch;
+      font-size: 1rem;
+    }
+
+    .showcase__control {
+      right: 0;
+      bottom: 0;
+      left: 0;
+      width: auto;
+      font-size: clamp(2.6rem, 13vw, 4.4rem);
+    }
+
+    .showcase__state {
+      max-width: 8ch;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .showcase__control {
+      font-size: 2.35rem;
+    }
+  }
+</style>

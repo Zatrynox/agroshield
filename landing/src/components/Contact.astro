@@ -1,0 +1,207 @@
+---
+import DemoForm from './DemoForm.astro';
+import { hasRealEmail, hasRealWhatsApp, supportEmail, whatsappUrl } from '../lib/site';
+---
+
+<section class="contact" id="contacto" aria-labelledby="contact-title">
+  <div class="contact__inner">
+    <div class="coupon" data-reveal>
+      <div class="coupon__intro">
+        <h2 id="contact-title">Cuéntanos qué supervisas.</h2>
+        <div>
+          <p class="coupon__lead">
+            Una demo guiada para ver si AgroShield encaja con tu explotación. Sin
+            compromiso y sin datos de clientes reales.
+          </p>
+          <div class="coupon__channels">
+            {hasRealWhatsApp && (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-event="whatsapp_click"
+                data-event-placement="contact"
+              >Prefiero WhatsApp <span aria-hidden="true">↗</span></a>
+            )}
+            {hasRealEmail && (
+              <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
+            )}
+            {!hasRealWhatsApp && !hasRealEmail && (
+              <span class="coupon__channels-note">Respondemos al correo que indiques.</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div class="coupon__form-wrap">
+        <DemoForm tone="dark" source="coupon" />
+      </div>
+
+      <span class="coupon__perf" aria-hidden="true"></span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact {
+    /* The mobile ticket notches sit 14px outside the coupon, while the section
+       only has 12px of padding. Clip that 2px spill without hiding the visible
+       semicircle inside the coupon. */
+    overflow-x: clip;
+    padding-block: clamp(72px, 9vw, 120px);
+    background: var(--as-bg);
+  }
+
+  .contact__inner {
+    width: 100%;
+    max-width: 1160px;
+    margin-inline: auto;
+    padding-inline: var(--as-margin);
+  }
+
+  .coupon {
+    position: relative;
+    display: grid;
+    grid-template-columns: 46% 54%;
+    margin-inline: auto;
+    border-radius: var(--as-radius-sm);
+    background: var(--as-accent);
+    color: var(--as-bg);
+  }
+
+  .coupon::before,
+  .coupon::after {
+    content: '';
+    position: absolute;
+    left: 46%;
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--as-bg);
+    transform: translateX(-50%);
+  }
+
+  .coupon::before {
+    top: -14px;
+  }
+
+  .coupon::after {
+    bottom: -14px;
+  }
+
+  .coupon__intro {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 48px;
+    padding: clamp(32px, 4vw, 48px);
+  }
+
+  .coupon h2 {
+    max-width: 9ch;
+    font-size: clamp(1.9rem, 3vw, 2.75rem);
+    line-height: 0.98;
+  }
+
+  .coupon__lead {
+    max-width: 28ch;
+    color: #e6e1d5;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .coupon__channels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin-top: 18px;
+    color: #e6e1d5;
+    font-size: 0.875rem;
+  }
+
+  .coupon__channels a {
+    color: var(--as-bg);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .coupon__channels-note {
+    color: #c8d2c5;
+  }
+
+  .coupon__form-wrap {
+    padding: clamp(28px, 3.4vw, 44px);
+  }
+
+  .coupon__perf {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 46%;
+    z-index: 2;
+    width: 0;
+    border-left: 5px dotted rgba(246, 243, 234, 0.45);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  @media (max-width: 880px) {
+    .contact__inner {
+      padding-inline: 12px;
+    }
+
+    .coupon {
+      grid-template-columns: 1fr;
+    }
+
+    .coupon::before,
+    .coupon::after,
+    .coupon__perf {
+      display: none;
+    }
+
+    .coupon__intro {
+      gap: 28px;
+      padding: 28px 24px 34px;
+    }
+
+    .coupon h2 {
+      max-width: 12ch;
+      font-size: clamp(1.8rem, 7vw, 2.4rem);
+    }
+
+    .coupon__form-wrap {
+      position: relative;
+      padding: 32px 24px 28px;
+      border-top: 5px dotted rgba(246, 243, 234, 0.45);
+    }
+
+    .coupon__form-wrap::before,
+    .coupon__form-wrap::after {
+      content: '';
+      position: absolute;
+      top: -17px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--as-bg);
+    }
+
+    .coupon__form-wrap::before {
+      left: -14px;
+    }
+
+    .coupon__form-wrap::after {
+      right: -14px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .coupon__intro,
+    .coupon__form-wrap {
+      padding-inline: 18px;
+    }
+  }
+</style>

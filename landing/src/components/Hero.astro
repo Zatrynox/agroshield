@@ -1,0 +1,467 @@
+---
+import CoreMark from './CoreMark.astro';
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__copy">
+    <h1 id="hero-title">El suelo avisa.<br />Con fecha límite.</h1>
+    <p class="hero__lead">
+      AgroShield convierte las lecturas firmadas de tus sensores en alertas con
+      cuenta atrás, estado del suelo y una recomendación concreta para actuar a tiempo.
+    </p>
+    <div class="hero__actions">
+      <a
+        class="button"
+        href="/demo"
+        data-event="cta_demo_click"
+        data-event-placement="hero"
+      >Solicitar una demo</a>
+      <span class="hero__note">Demo guiada · datos de ejemplo</span>
+    </div>
+  </div>
+
+  <div class="hero__stage">
+    <div
+      class="hero-card"
+      role="group"
+      aria-label="Vista de ejemplo de una alerta de AgroShield"
+      data-ui
+      data-hero-demo
+    >
+      <div class="hero-card__top">
+        <span class="demo-tag">Vista de ejemplo</span>
+        <button class="hero-card__ack" type="button" aria-pressed="false" data-hero-ack>
+          Reconocer alerta
+        </button>
+      </div>
+
+      <div class="hero-card__head">
+        <div>
+          <p class="hero-card__zone">Finca La Vega · Sector 4 · Olivos</p>
+          <h2 class="hero-card__title">Estrés hídrico en floración</h2>
+        </div>
+        <p class="hero-card__count">
+          <span>02 d 14 h</span>
+          <small data-hero-count-label>hasta el límite</small>
+        </p>
+      </div>
+
+      <div class="hero-card__status">
+        <span class="hero-card__dot" aria-hidden="true"></span>
+        <span aria-live="polite" data-hero-status>Alerta abierta</span>
+        <span class="hero-card__status-sep" aria-hidden="true">·</span>
+        <span>Severidad alta</span>
+      </div>
+
+      <div class="hero-card__soil">
+        <CoreMark label="Núcleo de suelo" />
+        <div class="hero-card__soil-copy">
+          <span>Salud del suelo</span>
+          <strong>42 / 100</strong>
+          <p>Factor limitante: materia orgánica baja</p>
+        </div>
+        <div class="hero-card__meter" aria-hidden="true">
+          <span class="is-filled"></span>
+          <span class="is-filled"></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="hero-card__recommendation">
+        <span>Recomendación</span>
+        <p>Riego corto al atardecer. Vuelve a medir humedad a las 06:00.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const card = document.querySelector<HTMLElement>('[data-hero-demo]');
+  const button = document.querySelector<HTMLButtonElement>('[data-hero-ack]');
+  const status = document.querySelector<HTMLElement>('[data-hero-status]');
+  const countLabel = document.querySelector<HTMLElement>('[data-hero-count-label]');
+
+  if (card && button && status && countLabel) {
+    button.addEventListener('click', () => {
+      const acknowledged = card.classList.toggle('is-ack');
+      button.setAttribute('aria-pressed', String(acknowledged));
+      button.textContent = acknowledged ? 'Reabrir vista' : 'Reconocer alerta';
+      status.textContent = acknowledged ? 'Alerta reconocida' : 'Alerta abierta';
+      countLabel.textContent = acknowledged ? 'acción registrada' : 'hasta el límite';
+    });
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100svh - 76px);
+    padding-top: clamp(40px, 7vh, 82px);
+    padding-bottom: 0;
+    overflow: hidden;
+    background: var(--as-bg);
+  }
+
+  .hero__copy {
+    width: 100%;
+    max-width: 810px;
+    padding-inline: var(--as-margin);
+    animation: hero-copy-in 700ms var(--as-ease-out) both;
+  }
+
+  .hero h1 {
+    max-width: 12ch;
+    font-size: clamp(2.2rem, 9vw, 5rem);
+    line-height: 0.92;
+    letter-spacing: -0.055em;
+  }
+
+  .hero__lead {
+    max-width: 44ch;
+    margin-top: clamp(18px, 2.8vh, 28px);
+    color: var(--as-muted);
+    font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+    line-height: 1.5;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 20px;
+    margin-top: clamp(22px, 3.4vh, 34px);
+  }
+
+  .hero__note {
+    color: var(--as-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hero__stage {
+    position: relative;
+    height: clamp(480px, 54vh, 640px);
+    margin-top: clamp(34px, 6vh, 64px);
+    margin-left: clamp(0px, 30vw, 420px);
+    padding: clamp(28px, 4vw, 56px) 0 0 clamp(20px, 4vw, 56px);
+    overflow: hidden;
+    background: var(--as-accent);
+    clip-path: polygon(96px 0, 100% 0, 100% 100%, 0 100%, 0 96px);
+    animation: hero-shutter 1100ms var(--as-ease-out) both;
+  }
+
+  .hero-card {
+    width: 620px;
+    max-width: none;
+    padding: 16px 20px 20px;
+    border: 1px solid #d5cdbb;
+    border-radius: var(--as-radius-sm);
+    background: #fbf9f1;
+    color: var(--as-ink);
+    font-size: 0.9375rem;
+    line-height: 1.35;
+    animation: fragment-settle 1150ms var(--as-ease-out) both;
+  }
+
+  .hero-card__top,
+  .hero-card__head,
+  .hero-card__status,
+  .hero-card__soil {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .hero-card__top {
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .hero-card__ack {
+    min-height: 44px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: var(--as-radius-sm);
+    background: var(--as-ink);
+    color: var(--as-bg);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: background-color var(--as-base) var(--as-ease-out);
+  }
+
+  .hero-card__ack:hover {
+    background: #30382d;
+  }
+
+  .hero-card:not(.is-ack) .hero-card__ack {
+    background: var(--as-accent);
+  }
+
+  .hero-card__head {
+    justify-content: space-between;
+    gap: 28px;
+    margin-top: 18px;
+  }
+
+  .hero-card__zone {
+    color: var(--as-muted);
+    font-size: 0.8125rem;
+    letter-spacing: 0.005em;
+  }
+
+  .hero-card__title {
+    max-width: 17ch;
+    margin-top: 6px;
+    font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+  }
+
+  .hero-card__count {
+    flex: none;
+    text-align: right;
+  }
+
+  .hero-card__count span {
+    display: block;
+    font-size: clamp(1.55rem, 2.8vw, 2rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+
+  .hero-card__count small {
+    display: block;
+    margin-top: 5px;
+    color: var(--as-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hero-card__status {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+    color: var(--as-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hero-card__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--as-clay);
+  }
+
+  .hero-card__status-sep {
+    opacity: 0.5;
+  }
+
+  .hero-card.is-ack .hero-card__dot {
+    background: var(--as-success);
+  }
+
+  .hero-card__soil {
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: var(--as-radius-sm);
+    background: var(--as-surface);
+  }
+
+  .hero-card__soil .core-mark {
+    width: 20px;
+    height: 34px;
+  }
+
+  .hero-card__soil-copy {
+    flex: 1;
+  }
+
+  .hero-card__soil-copy span {
+    display: block;
+    color: var(--as-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hero-card__soil-copy strong {
+    display: block;
+    margin-top: 1px;
+    font-size: 1.25rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  .hero-card__soil-copy p {
+    margin-top: 2px;
+    color: var(--as-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hero-card__meter {
+    display: flex;
+    flex: none;
+    gap: 3px;
+  }
+
+  .hero-card__meter span {
+    display: block;
+    width: 9px;
+    height: 30px;
+    border-radius: 1px;
+    background: #d9d2c1;
+  }
+
+  .hero-card__meter span.is-filled {
+    background: var(--as-clay);
+  }
+
+  .hero-card__recommendation {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e2dbcb;
+  }
+
+  .hero-card__recommendation span {
+    color: var(--as-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hero-card__recommendation p {
+    margin-top: 3px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .hero-card.is-ack .hero-card__dot {
+    box-shadow: 0 0 0 3px rgba(36, 84, 58, 0.14);
+  }
+
+  @keyframes hero-shutter {
+    from {
+      clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%);
+    }
+    to {
+      clip-path: polygon(96px 0, 100% 0, 100% 100%, 0 100%, 0 96px);
+    }
+  }
+
+  @keyframes fragment-settle {
+    from {
+      opacity: 0.3;
+      transform: scale(1.06);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes hero-copy-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (min-width: 1500px) {
+    .hero__stage {
+      margin-left: 440px;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .hero {
+      min-height: 0;
+      padding-top: 26px;
+    }
+
+    .hero h1 {
+      max-width: 11ch;
+      font-size: clamp(2.15rem, 10.6vw, 3.6rem);
+    }
+
+    .hero__lead {
+      max-width: 38ch;
+      font-size: 1.0625rem;
+    }
+
+    .hero__actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero__note {
+      font-size: 0.8125rem;
+    }
+
+    .hero__stage {
+      height: 55svh;
+      min-height: 380px;
+      margin-top: 36px;
+      margin-left: 0;
+      padding: 16px 0 0 16px;
+      clip-path: polygon(56px 0, 100% 0, 100% 100%, 0 100%, 0 56px);
+    }
+
+    .hero-card {
+      width: 560px;
+      padding: 14px 16px 18px;
+    }
+
+    .hero-card__head {
+      gap: 14px;
+    }
+
+    .hero-card__title {
+      max-width: 15ch;
+      font-size: 1.3rem;
+    }
+
+    .hero-card__count span {
+      font-size: 1.5rem;
+    }
+
+    .hero-card__soil {
+      padding: 10px 12px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .hero-card__head {
+      display: block;
+    }
+
+    .hero-card__count {
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .hero-card__count span,
+    .hero-card__count small {
+      display: inline;
+      font-size: 0.9375rem;
+    }
+
+    .hero-card__count small {
+      margin-left: 6px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__copy,
+    .hero__stage,
+    .hero-card {
+      animation: none;
+    }
+  }
+</style>

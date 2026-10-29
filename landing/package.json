@@ -1,0 +1,25 @@
+{
+  "name": "@agroshield/landing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "preview": "astro preview --port 4321",
+    "typecheck": "astro check",
+    "test": "vitest run",
+    "assets": "node scripts/generate-brand-assets.mjs"
+  },
+  "dependencies": {
+    "@agroshield/design-tokens": "workspace:*",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.4.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "sharp": "^0.35.5",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.5"
+  }
+}

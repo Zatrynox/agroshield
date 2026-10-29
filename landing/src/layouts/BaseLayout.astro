@@ -1,0 +1,51 @@
+---
+import '@agroshield/design-tokens/tokens.css';
+import '../styles/global.css';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import ConsentBanner from '../components/ConsentBanner.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  noindex?: boolean;
+  jsonLd?: Record<string, unknown>[];
+}
+
+const { title, description, path, noindex = false, jsonLd = [] } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="no-js">
+  <head>
+    <BaseHead
+      title={title}
+      description={description}
+      path={path}
+      noindex={noindex}
+      jsonLd={jsonLd}
+    />
+    <script is:inline>
+      document.documentElement.classList.replace('no-js', 'js');
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <Header />
+    <main id="contenido">
+      <slot />
+    </main>
+    <Footer />
+    <ConsentBanner />
+
+    <script>
+      import { initAnalytics } from '../scripts/analytics';
+      import { initReveal } from '../scripts/reveal';
+
+      initAnalytics();
+      initReveal();
+    </script>
+  </body>
+</html>

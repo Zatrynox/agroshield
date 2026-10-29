@@ -1,0 +1,53 @@
+{
+  "name": "agroshield",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AgroShield - predictive soil and crop monitoring platform",
+  "packageManager": "pnpm@11.1.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test",
+    "dev:api": "pnpm --filter @agroshield/backend dev",
+    "dev:app": "pnpm --filter @agroshield/frontend dev",
+    "dev:landing": "pnpm --filter @agroshield/landing dev",
+    "seed": "pnpm --filter @agroshield/backend seed",
+    "simulate": "pnpm --filter @agroshield/backend simulate",
+    "verify:links": "node scripts/check-links.mjs",
+    "verify:infra": "node scripts/validate-infra.mjs",
+    "stack:up": "node scripts/stack.mjs local:up",
+    "stack:down": "node scripts/stack.mjs local:down",
+    "stack:reset": "node scripts/stack.mjs local:reset",
+    "stack:logs": "node scripts/stack.mjs local:logs",
+    "stack:ps": "node scripts/stack.mjs local:ps",
+    "stack:seed": "node scripts/stack.mjs local:seed",
+    "stack:simulate": "node scripts/stack.mjs local:simulate",
+    "stack:dev": "node scripts/stack.mjs dev:up",
+    "stack:dev:down": "node scripts/stack.mjs dev:down",
+    "stack:dev:seed": "node scripts/stack.mjs dev:seed",
+    "stack:prod": "node scripts/stack.mjs prod:up",
+    "stack:prod:down": "node scripts/stack.mjs prod:down",
+    "stack:verify": "node scripts/stack.mjs verify",
+    "scan:secrets": "node scripts/scan.mjs secrets",
+    "scan:images": "node scripts/scan.mjs images",
+    "scan": "node scripts/scan.mjs all"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@node-rs/argon2",
+      "sharp"
+    ]
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "chrome-launcher": "^1.2.2",
+    "lighthouse": "^13.5.0",
+    "playwright": "^1.64.1",
+    "yaml": "^2.9.1"
+  }
+}

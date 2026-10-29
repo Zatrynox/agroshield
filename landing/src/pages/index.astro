@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import HowItWorks from '../components/HowItWorks.astro';
+import Features from '../components/Features.astro';
+import Showcase from '../components/Showcase.astro';
+import About from '../components/About.astro';
+import Faq from '../components/Faq.astro';
+import Contact from '../components/Contact.astro';
+import { faqItems } from '../lib/faq';
+import { landingUrl } from '../lib/site';
+
+const base = Astro.site ?? new URL(landingUrl);
+const canonical = new URL('/', base).href;
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'AgroShield',
+    applicationCategory: 'BusinessApplication',
+    applicationSubCategory: 'Farm management',
+    operatingSystem: 'Web',
+    url: canonical,
+    inLanguage: 'es-ES',
+    description:
+      'Monitoreo predictivo de suelos y cultivos: lecturas firmadas por sensores, alertas con cuenta atrás, salud del suelo y recomendaciones operativas.',
+    featureList: [
+      'Lecturas firmadas con Ed25519',
+      'Alertas con cuenta atrás',
+      'Salud del suelo y factor limitante',
+      'Aislamiento por organización',
+      'Pronóstico de tendencia marcado como demo',
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'AgroShield',
+    url: canonical,
+    logo: new URL('/icon-512.png', base).href,
+    description:
+      'Producto en desarrollo para convertir lecturas de suelo verificables en decisiones agrícolas a tiempo.',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'AgroShield',
+    url: canonical,
+    inLanguage: 'es-ES',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  title="AgroShield — El suelo avisa con fecha límite"
+  description="Convierte lecturas firmadas de tus sensores en alertas con cuenta atrás, estado del suelo y una recomendación concreta. Solicita una demo de AgroShield."
+  path="/"
+  jsonLd={jsonLd}
+>
+  <Hero />
+  <HowItWorks />
+  <Features />
+  <Showcase />
+  <About />
+  <Faq />
+  <Contact />
+</BaseLayout>

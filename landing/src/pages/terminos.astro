@@ -1,0 +1,101 @@
+---
+import LegalLayout from '../layouts/LegalLayout.astro';
+import { legalEntity } from '../lib/site';
+---
+
+<LegalLayout
+  title="Términos de uso"
+  description="Condiciones de uso del sitio público y de la demo de AgroShield."
+  path="/terminos"
+>
+  <p class="prose__lede">
+    Estos términos describen el uso del sitio público y de la demo de AgroShield.
+    No constituyen una oferta comercial, un contrato de servicio ni una garantía
+    agronómica.
+  </p>
+
+  <h2>Titular y objeto</h2>
+  <p>
+    El sitio es operado por <strong>{legalEntity}</strong>. Su objeto es presentar el
+    producto, permitir el envío de solicitudes de demo y publicar documentación
+    técnica y legal. La demo utiliza datos de ejemplo y no representa clientes reales.
+  </p>
+
+  <h2>Acceso y uso permitido</h2>
+  <ul>
+    <li>Puedes consultar el sitio y enviar una solicitud con datos veraces.</li>
+    <li>No puedes intentar acceder a cuentas, organizaciones o datos ajenos.</li>
+    <li>No puedes interferir en la seguridad, disponibilidad o integridad del servicio.</li>
+    <li>No puedes extraer el sitio de forma masiva ni reutilizar sus contenidos sin permiso.</li>
+    <li>No puedes usar el formulario para spam, suplantación o contenido ilícito.</li>
+  </ul>
+  <p>
+    Podemos limitar o bloquear el acceso ante un uso abusivo, siempre con las
+    garantías legales aplicables.
+  </p>
+
+  <h2>Demo y datos de ejemplo</h2>
+  <p>
+    La demo local se ejecuta con datos generados y un simulador de sensores. No debe
+    apuntar a una base de producción ni mezclarse con información de clientes. Las
+    alertas, la salud del suelo, el pronóstico y la predicción de riesgo son ayudas
+    para la decisión: no sustituyen el criterio agronómico ni una comprobación en campo.
+  </p>
+  <p>
+    Las predicciones y tendencias que aún no se han validado con datos reales se
+    muestran con la etiqueta «Vista de ejemplo». No publicamos métricas de resultado
+    que no podamos demostrar.
+  </p>
+
+  <h2>Cuentas y credenciales</h2>
+  <p>
+    Si se habilita el acceso a la aplicación, cada persona usuaria es responsable de
+    custodiar su contraseña y de no compartir la sesión. La clave privada de un sensor
+    se muestra una sola vez; debes guardarla en el dispositivo y revocarla si se
+    pierde. El titular puede revocar claves y sesiones desde el panel.
+  </p>
+
+  <h2>Propiedad intelectual</h2>
+  <p>
+    El nombre, la interfaz, el código y los textos son del titular o se usan con
+    licencia. Las fotografías de Wikimedia Commons se atribuyen en la página de
+    créditos y conservan su licencia original. La tipografía Switzer se usa bajo la
+    licencia de Fontshare.
+  </p>
+
+  <h2>Disponibilidad y cambios</h2>
+  <p>
+    El sitio se ofrece «tal cual» y puede cambiar, suspenderse o dejar de estar
+    disponible. No hay un acuerdo de nivel de servicio (SLA) para la demo. Los precios,
+    planes y la pasarela de pago no están definidos y no se anuncian como disponibles.
+  </p>
+
+  <h2>Responsabilidad</h2>
+  <p>
+    En la medida permitida por la ley, el titular no responde de daños indirectos
+    derivados del uso del sitio o de decisiones agronómicas basadas solo en la demo.
+    Nada en estos términos excluye responsabilidades que no puedan limitarse legalmente,
+    como los derechos de consumidores o la protección de datos.
+  </p>
+
+  <h2>Enlaces externos</h2>
+  <p>
+    Algunos enlaces llevan a sitios de terceros (por ejemplo, Wikimedia Commons o
+    WhatsApp). No controlamos su contenido ni sus políticas; se aplican las condiciones
+    de cada servicio.
+  </p>
+
+  <h2>Ley aplicable</h2>
+  <p>
+    Estos términos se rigen por la legislación española. Las controversias se someterán
+    a los juzgados y tribunales competentes conforme a la ley aplicable, sin perjuicio
+    de los fueros que correspondan a consumidores.
+  </p>
+
+  <h2>Cambios</h2>
+  <p>
+    Podemos actualizar estos términos para reflejar cambios en el producto o en la ley.
+    La fecha de la última actualización aparece al principio. El uso continuado después
+    de un cambio material implica su aceptación en la medida permitida.
+  </p>
+</LegalLayout>

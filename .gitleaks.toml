@@ -1,0 +1,26 @@
+# Secret scanning policy for Gitleaks.
+#
+# The committed examples contain deliberately fake local-only values. The real
+# .env and infra/env/prod.env are gitignored. CI additionally checks that no
+# .env file is tracked, so allowlisting the local path here cannot hide a
+# committed secret file.
+
+title = "AgroShield"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Local examples, generated evidence and lockfile data"
+paths = [
+  '''(^|/)\.env$''',
+  '''(^|/)\.env\.example$''',
+  '''infra/env/.*\.example$''',
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''landing/src/assets/credits\.json$''',
+]
+regexes = [
+  '''Demo-AgroShield-2026!''',
+  '''local-only-db-password''',
+  '''local-only-session-secret-0123456789abcdef0123456789abcdef''',
+]

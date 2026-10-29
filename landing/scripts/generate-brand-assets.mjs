@@ -1,0 +1,76 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
+
+const publicDir = new URL('../public/', import.meta.url);
+const publicPath = (name) => fileURLToPath(new URL(name, publicDir));
+await mkdir(publicDir, { recursive: true });
+
+const favicon = await readFile(new URL('favicon.svg', publicDir));
+
+const pngTargets = [
+  ['favicon-32.png', 32, true],
+  ['apple-touch-icon.png', 180, false],
+  ['icon-192.png', 192, false],
+  ['icon-512.png', 512, false],
+];
+
+for (const [name, size, transparent] of pngTargets) {
+  let pipeline = sharp(favicon, { density: 512 }).resize(size, size);
+  if (!transparent) pipeline = pipeline.flatten({ background: '#f6f3ea' });
+  await pipeline.png().toFile(publicPath(name));
+}
+
+const ogSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f6f3ea"/>
+  <path d="M690 0H1200V630H690V0Z" fill="#24543a"/>
+  <path d="M810 0H1200V630H690L690 120L810 0Z" fill="#2b6043"/>
+  <g transform="translate(80 68)">
+    <rect width="44" height="44" rx="4" fill="#24543a"/>
+    <g transform="translate(14 9) scale(.65)">
+      <clipPath id="core-small">
+        <path d="M23 17C23 11.5 27 8 32 8s9 3.5 9 9v21c0 5.5-2.4 9.4-9 18-6.6-8.6-9-12.5-9-18z"/>
+      </clipPath>
+      <g clip-path="url(#core-small)">
+        <rect x="23" y="8" width="18" height="10" fill="#a9864e"/>
+        <rect x="23" y="18" width="18" height="10" fill="#6d5536"/>
+        <rect x="23" y="28" width="18" height="10" fill="#c1a56e"/>
+        <rect x="23" y="38" width="18" height="25" fill="#59604a"/>
+      </g>
+    </g>
+    <text x="58" y="31" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="27" font-weight="700" fill="#1b2119" letter-spacing="-1">AgroShield</text>
+  </g>
+  <text x="80" y="260" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="78" font-weight="700" fill="#1b2119" letter-spacing="-4">El suelo avisa.</text>
+  <text x="80" y="340" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="78" font-weight="700" fill="#1b2119" letter-spacing="-4">Con fecha límite.</text>
+  <text x="82" y="408" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="25" fill="#596054">Lecturas firmadas, alertas con cuenta atrás</text>
+  <text x="82" y="442" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="25" fill="#596054">y una recomendación concreta.</text>
+  <rect x="82" y="500" width="226" height="46" rx="4" fill="#24543a"/>
+  <text x="104" y="530" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="18" font-weight="600" fill="#ffffff">Solicitar una demo</text>
+
+  <g transform="translate(748 158)">
+    <rect width="380" height="322" rx="5" fill="#fbf9f1"/>
+    <rect x="20" y="20" width="112" height="24" rx="3" fill="#c18b2f"/>
+    <text x="32" y="37" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#20180a">VISTA DE EJEMPLO</text>
+    <text x="20" y="82" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="13" fill="#596054">Finca La Vega · Sector 4 · Olivos</text>
+    <text x="20" y="116" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#1b2119" letter-spacing="-1">Estrés hídrico</text>
+    <text x="20" y="146" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#1b2119" letter-spacing="-1">en floración</text>
+    <text x="20" y="205" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="46" font-weight="700" fill="#1b2119" letter-spacing="-2">02 d 14 h</text>
+    <text x="20" y="230" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="13" fill="#596054">hasta el límite</text>
+    <rect x="20" y="256" width="340" height="46" rx="4" fill="#ece7da"/>
+    <text x="34" y="277" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" fill="#596054">Salud del suelo</text>
+    <text x="34" y="294" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#1b2119">42 / 100</text>
+    <text x="228" y="284" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" fill="#596054">Factor limitante:</text>
+    <text x="228" y="300" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#1b2119">materia orgánica</text>
+  </g>
+  <text x="748" y="530" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="14" fill="#d8e2d2">Demo de producto · sin datos de clientes</text>
+</svg>
+`;
+
+await writeFile(new URL('og-image.svg', publicDir), ogSvg, 'utf8');
+await sharp(Buffer.from(ogSvg), { density: 144 })
+  .resize(1200, 630)
+  .png()
+  .toFile(publicPath('og-image.png'));
+
+console.log('Brand assets generated in landing/public');

@@ -1,0 +1,13 @@
+---
+const bands = Array.from({ length: 7 });
+
+interface Props {
+  label?: string;
+}
+
+const { label } = Astro.props;
+---
+
+<span class="core-mark" aria-hidden={label ? undefined : 'true'} role={label ? 'img' : undefined} aria-label={label}>
+  {bands.map(() => <span class="core-mark__band"></span>)}
+</span>

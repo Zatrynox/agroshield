@@ -1,0 +1,22 @@
+{
+  "name": "@agroshield/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens.css",
+    "./tokens.json": "./tokens.json"
+  },
+  "files": [
+    "src",
+    "tokens.json"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node -e \"console.log('design tokens are consumed as source')\""
+  },
+  "devDependencies": {
+    "typescript": "5.7.2"
+  }
+}

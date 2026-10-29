@@ -1,0 +1,131 @@
+---
+import LegalLayout from '../layouts/LegalLayout.astro';
+---
+
+<LegalLayout
+  title="Cookies y analítica"
+  description="AgroShield no usa cookies de terceros. Esta página explica la cookie de sesión, el consentimiento de analítica y cómo cambiarlo."
+  path="/cookies"
+>
+  <p class="prose__lede">
+    AgroShield no usa cookies publicitarias ni de terceros. La analítica del sitio es
+    propia y solo se activa si la aceptas. Puedes cambiar tu elección cuando quieras.
+  </p>
+
+  <h2>Tu elección actual</h2>
+  <p data-consent-state>Comprobando la preferencia guardada…</p>
+  <p>
+    <button class="button" type="button" data-consent-reset>Cambiar mi elección</button>
+  </p>
+  <p class="prose__meta">
+    Al cambiarla se borra la preferencia guardada y se recarga la página para que
+    vuelvas a elegir.
+  </p>
+
+  <h2>Qué guardamos</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Dónde</th>
+        <th>Para qué</th>
+        <th>Duración</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>agroshield_session</code></td>
+        <td>Cookie de primera parte</td>
+        <td>Sesión autenticada de la aplicación. HttpOnly, SameSite=Lax y Secure en producción.</td>
+        <td>8 horas por defecto</td>
+      </tr>
+      <tr>
+        <td><code>agroshield.analytics.consent.v1</code></td>
+        <td>localStorage</td>
+        <td>Guardar si aceptas o rechazas la analítica. No es una cookie ni se envía al servidor.</td>
+        <td>Hasta que la borres</td>
+      </tr>
+      <tr>
+        <td>Eventos de analítica</td>
+        <td>Base de datos propia</td>
+        <td>Ruta, evento y propiedades acotadas, solo tras aceptar. Sin IP ni identificadores publicitarios.</td>
+        <td>Hasta 12 meses</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Qué no usamos</h2>
+  <ul>
+    <li>Cookies de publicidad, redes sociales o píxeles de terceros.</li>
+    <li>Identificadores estables para reconocerte entre sitios.</li>
+    <li>Analítica antes de que aceptes.</li>
+    <li>Ventanas de consentimiento que bloquean el contenido: rechazar no te impide usar el sitio.</li>
+  </ul>
+
+  <h2>Cómo funciona el consentimiento</h2>
+  <p>
+    El aviso del sitio guarda tu elección en tu navegador. Si aceptas, se envían
+    eventos a <code>/api/v1/analytics/events</code>; si rechazas, no se envía ninguno.
+    No se registra el rechazo en el servidor porque sería una contradicción con la
+    propia elección. La preferencia se puede borrar desde esta página.
+  </p>
+
+  <h2>Cookies necesarias de la aplicación</h2>
+  <p>
+    La cookie de sesión es necesaria para mantener tu cuenta autenticada. No se usa
+    para analítica. El token CSRF no se guarda en una cookie: viaja en la sesión y se
+    envía en la cabecera <code>x-csrf-token</code> en operaciones que lo requieren.
+  </p>
+
+  <h2>Cambiar la configuración del navegador</h2>
+  <p>
+    Puedes borrar cookies y almacenamiento local desde la configuración de tu navegador.
+    Si borras la cookie de sesión, se cerrará la sesión. Si borras la preferencia de
+    analítica, el aviso volverá a aparecer.
+  </p>
+</LegalLayout>
+
+<script>
+  import { readConsent } from '../lib/consent';
+
+  const state = document.querySelector<HTMLElement>('[data-consent-state]');
+  if (state) {
+    const consent = readConsent();
+    state.textContent =
+      consent === 'granted'
+        ? 'Has aceptado la analítica propia. Puedes retirarla en cualquier momento.'
+        : consent === 'denied'
+          ? 'Has rechazado la analítica. No se envían eventos.'
+          : 'Aún no has elegido. La analítica está desactivada.';
+  }
+</script>
+
+<style>
+  .prose table {
+    width: 100%;
+    margin-top: 1.5em;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+
+  .prose th,
+  .prose td {
+    padding: 12px 12px 12px 0;
+    border-bottom: 1px solid var(--as-line);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .prose th {
+    font-weight: 600;
+  }
+
+  .prose td code {
+    white-space: nowrap;
+  }
+
+  .prose .button {
+    margin-block: 8px;
+  }
+</style>

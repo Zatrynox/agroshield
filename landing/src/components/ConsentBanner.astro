@@ -1,0 +1,142 @@
+---
+---
+
+<aside class="consent" aria-label="Analítica del sitio" data-consent-banner hidden>
+  <div class="consent__copy">
+    <p>
+      <strong>Analítica propia, sin cookies de terceros.</strong> Solo medimos visitas y
+      clics si lo aceptas. Puedes rechazarlo y seguir usando el sitio con normalidad.
+    </p>
+    <a href="/cookies">Qué medimos y cómo cambiarlo</a>
+  </div>
+  <div class="consent__actions">
+    <button class="button button--light consent__button" type="button" data-consent-accept>
+      Aceptar analítica
+    </button>
+    <button class="consent__reject" type="button" data-consent-reject>
+      Rechazar
+    </button>
+  </div>
+</aside>
+
+<script>
+  import { clearConsent, readConsent, writeConsent } from '../lib/consent';
+  import { track, trackPageView } from '../scripts/analytics';
+
+  const banner = document.querySelector<HTMLElement>('[data-consent-banner]');
+  const accept = document.querySelector<HTMLButtonElement>('[data-consent-accept]');
+  const reject = document.querySelector<HTMLButtonElement>('[data-consent-reject]');
+
+  if (banner && accept && reject) {
+    if (readConsent() === null) banner.hidden = false;
+
+    accept.addEventListener('click', () => {
+      writeConsent('granted');
+      banner.hidden = true;
+      trackPageView();
+      track('consent_accepted', { placement: 'banner' });
+    });
+
+    reject.addEventListener('click', () => {
+      writeConsent('denied');
+      banner.hidden = true;
+    });
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (!target.closest('[data-consent-reset]')) return;
+    event.preventDefault();
+    clearConsent();
+    window.location.reload();
+  });
+</script>
+
+<style>
+  .consent {
+    position: fixed;
+    right: var(--as-margin);
+    bottom: 16px;
+    left: var(--as-margin);
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    max-width: 980px;
+    margin-inline: auto;
+    padding: 20px 22px;
+    border-radius: var(--as-radius-sm);
+    background: var(--as-ink);
+    color: var(--as-bg);
+  }
+
+  .consent__copy {
+    max-width: 62ch;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .consent__copy strong {
+    font-weight: 600;
+  }
+
+  .consent__copy a {
+    display: inline-block;
+    margin-top: 4px;
+    color: #dfe3d8;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .consent__actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .consent__button {
+    min-height: 44px;
+    padding: 9px 16px;
+    font-size: 0.9375rem;
+  }
+
+  .consent__reject {
+    padding: 10px 2px;
+    border: 0;
+    background: transparent;
+    color: var(--as-bg);
+    font-size: 0.9375rem;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .consent__reject:hover {
+    opacity: 0.7;
+  }
+
+  @media (max-width: 760px) {
+    .consent {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .consent__actions {
+      justify-content: space-between;
+    }
+
+    .consent__button {
+      flex: 1;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .consent__actions {
+      display: grid;
+      gap: 8px;
+    }
+  }
+</style>

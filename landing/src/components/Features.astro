@@ -1,0 +1,262 @@
+---
+import { Image } from 'astro:assets';
+import aerialFarmland from '../assets/photos/aerial-farmland.jpg';
+import wheatClose from '../assets/photos/wheat-close.jpg';
+import soilProfile from '../assets/photos/soil-profile.jpg';
+import pivotIrrigation from '../assets/photos/pivot-irrigation.jpg';
+import oliveGrove from '../assets/photos/olive-grove.jpg';
+import farmerWheat from '../assets/photos/farmer-wheat.jpg';
+
+const features = [
+  {
+    name: 'Firma por sensor',
+    fact: 'La lectura se verifica antes de entrar.',
+    image: aerialFarmland,
+    alt: 'Vista aérea de parcelas agrícolas con franjas de cultivo y caminos rurales.',
+    color: 'var(--as-accent)',
+    size: '(max-width: 820px) 44vw, 190px',
+  },
+  {
+    name: 'Cuenta atrás',
+    fact: 'La alerta muestra cuánto queda antes del límite, no solo que algo falla.',
+    image: wheatClose,
+    alt: 'Primer plano de una espiga de trigo madura.',
+    color: 'var(--as-ochre)',
+    wide: true,
+    size: '(max-width: 820px) 90vw, 440px',
+  },
+  {
+    name: 'Salud del suelo',
+    fact: 'Puntuación, factor limitante y recomendación en la misma vista.',
+    image: soilProfile,
+    alt: 'Perfil de suelo con horizontes de distinto color y textura.',
+    color: 'var(--as-data)',
+    size: '(max-width: 820px) 44vw, 190px',
+  },
+  {
+    name: 'Aislamiento por organización',
+    fact: 'Cada consulta se acota a la organización de la sesión.',
+    image: pivotIrrigation,
+    alt: 'Sistema de riego por pivote central sobre un campo verde.',
+    color: 'var(--as-clay)',
+    size: '(max-width: 820px) 44vw, 190px',
+  },
+  {
+    name: 'Pronóstico demo',
+    fact: 'Tendencia a siete días, marcada como vista de ejemplo.',
+    image: oliveGrove,
+    alt: 'Olivar y almendros en una ladera de Andalucía.',
+    color: 'var(--as-surface-strong)',
+    light: true,
+    size: '(max-width: 820px) 44vw, 190px',
+  },
+  {
+    name: 'Historial de acciones',
+    fact: 'Quién reconoció, cuándo y con qué nota.',
+    image: farmerWheat,
+    alt: 'Agricultor examinando una espiga de trigo en su campo.',
+    color: 'var(--as-accent-soft)',
+    light: true,
+    size: '(max-width: 820px) 44vw, 190px',
+  },
+];
+---
+
+<section class="features section" id="capacidades" aria-labelledby="features-title">
+  <div class="container features__grid">
+    <header class="features__intro" data-reveal>
+      <h2 class="section-heading" id="features-title">Lo que el panel controla.</h2>
+      <p class="section-lead">
+        Cada capacidad responde a una pregunta operativa concreta, no a una lista
+        de funciones.
+      </p>
+    </header>
+
+    <div class="features__tiles">
+      {features.map((feature, index) => (
+        <article
+          class:list={['feature', feature.wide && 'feature--wide']}
+          data-reveal
+          style={`--reveal-delay:${index * 35}ms`}
+        >
+          <div
+            class:list={['feature__tile', feature.light && 'feature__tile--light']}
+            style={`--tile-color:${feature.color}`}
+          >
+            <div class="feature__photo core-photo">
+              <Image
+                src={feature.image}
+                alt={feature.alt}
+                widths={[160, 240, 320, 480]}
+                sizes={feature.size}
+                loading="lazy"
+                decoding="async"
+                quality={78}
+              />
+            </div>
+          </div>
+          <h3>{feature.name}</h3>
+          <p>{feature.fact}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .features__grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: clamp(22px, 3vw, 40px);
+  }
+
+  .features__intro {
+    grid-column: 1 / span 3;
+    align-self: start;
+    position: sticky;
+    top: 108px;
+  }
+
+  .features__tiles {
+    display: grid;
+    grid-column: 4 / span 9;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px 10px;
+  }
+
+  .feature {
+    min-width: 0;
+  }
+
+  .feature--wide {
+    grid-column: span 2;
+  }
+
+  .feature__tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--tile-color);
+  }
+
+  .feature--wide .feature__tile {
+    aspect-ratio: 8 / 5;
+  }
+
+  .feature__photo {
+    width: 62%;
+    height: 70%;
+  }
+
+  .feature--wide .feature__photo {
+    width: 25%;
+    max-width: 118px;
+    height: 76%;
+  }
+
+  .feature__tile--light .feature__photo img {
+    mix-blend-mode: multiply;
+  }
+
+  .feature h3 {
+    margin-top: 13px;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+  }
+
+  .feature p {
+    margin-top: 5px;
+    color: var(--as-muted);
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .feature--wide h3 {
+    font-size: 1.25rem;
+  }
+
+  @media (max-width: 1080px) {
+    .features__intro {
+      grid-column: 1 / span 4;
+    }
+
+    .features__tiles {
+      grid-column: 5 / span 8;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .feature--wide {
+      grid-column: span 2;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .features__grid {
+      display: block;
+    }
+
+    .features__intro {
+      position: static;
+    }
+
+    .features__tiles {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px 8px;
+      margin-top: 36px;
+    }
+
+    .feature--wide {
+      order: -1;
+      grid-column: 1 / -1;
+    }
+
+    .feature--wide .feature__tile {
+      aspect-ratio: 8 / 5;
+    }
+
+    .feature--wide .feature__photo {
+      width: 30%;
+      max-width: 150px;
+      height: 78%;
+    }
+
+    .feature h3 {
+      margin-top: 10px;
+      font-size: 1.0625rem;
+    }
+
+    .feature p {
+      margin-top: 4px;
+      font-size: 0.9375rem;
+      line-height: 1.35;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .features__tiles {
+      gap: 20px 8px;
+    }
+
+    .feature__tile {
+      aspect-ratio: 4 / 5;
+    }
+
+    .feature__photo {
+      width: 66%;
+      height: 68%;
+    }
+
+    .feature h3 {
+      font-size: 1rem;
+    }
+
+    .feature p {
+      font-size: 0.875rem;
+    }
+  }
+</style>

@@ -1,0 +1,572 @@
+---
+interface Props {
+  tone?: 'light' | 'dark';
+  source?: string;
+}
+
+const { tone = 'light', source = 'landing' } = Astro.props;
+---
+
+<form
+  class:list={['lead-form', `lead-form--${tone}`]}
+  data-demo-form
+  data-source={source}
+  method="post"
+  novalidate
+>
+  <div class="lead-form__field">
+    <label class="lead-form__label" for="lead-name">
+      Nombre <span aria-hidden="true">*</span>
+    </label>
+    <input
+      class="lead-form__control"
+      id="lead-name"
+      name="name"
+      type="text"
+      autocomplete="name"
+      maxlength="120"
+      required
+      placeholder="Tu nombre"
+    />
+    <p class="lead-form__error" id="lead-name-error" data-error-for="name"></p>
+  </div>
+
+  <div class="lead-form__field">
+    <label class="lead-form__label" for="lead-company">
+      Empresa o entidad <span aria-hidden="true">*</span>
+    </label>
+    <input
+      class="lead-form__control"
+      id="lead-company"
+      name="company"
+      type="text"
+      autocomplete="organization"
+      maxlength="160"
+      required
+      placeholder="Nombre de la explotación"
+    />
+    <p class="lead-form__error" id="lead-company-error" data-error-for="company"></p>
+  </div>
+
+  <div class="lead-form__field">
+    <label class="lead-form__label" for="lead-email">
+      Correo <span aria-hidden="true">*</span>
+    </label>
+    <input
+      class="lead-form__control"
+      id="lead-email"
+      name="email"
+      type="email"
+      autocomplete="email"
+      maxlength="320"
+      required
+      placeholder="nombre@empresa.es"
+    />
+    <p class="lead-form__error" id="lead-email-error" data-error-for="email"></p>
+  </div>
+
+  <div class="lead-form__field">
+    <label class="lead-form__label" for="lead-phone">Teléfono <span class="lead-form__optional">(opcional)</span></label>
+    <input
+      class="lead-form__control"
+      id="lead-phone"
+      name="phone"
+      type="tel"
+      autocomplete="tel"
+      maxlength="40"
+      placeholder="+34 600 000 000"
+    />
+    <p class="lead-form__error" id="lead-phone-error" data-error-for="phone"></p>
+  </div>
+
+  <div class="lead-form__field lead-form__field--full">
+    <label class="lead-form__label" for="lead-message">
+      Qué supervisas <span aria-hidden="true">*</span>
+    </label>
+    <textarea
+      class="lead-form__control lead-form__textarea"
+      id="lead-message"
+      name="message"
+      rows="4"
+      maxlength="2000"
+      required
+      placeholder="Cultivo, superficie, número de zonas o sensores que ya tienes."
+    ></textarea>
+    <p class="lead-form__error" id="lead-message-error" data-error-for="message"></p>
+  </div>
+
+  <div class="lead-form__field lead-form__field--full">
+    <label class="lead-form__consent" for="lead-consent">
+      <input id="lead-consent" name="consent" type="checkbox" required />
+      <span>
+        He leído la <a href="/privacidad" target="_blank" rel="noopener">política de privacidad</a>
+        y acepto que AgroShield use estos datos para responder a mi solicitud.
+      </span>
+    </label>
+    <p class="lead-form__error" id="lead-consent-error" data-error-for="consent"></p>
+  </div>
+
+  <div class="lead-form__honeypot" aria-hidden="true">
+    <label for="lead-website">No rellenar</label>
+    <input id="lead-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <button class="button lead-form__submit" type="submit" data-submit>
+    Enviar solicitud
+  </button>
+
+  <p class="lead-form__status" role="status" aria-live="polite" tabindex="-1" data-status></p>
+
+  <p class="lead-form__small lead-form__field--full">
+    Verificación anti-spam local, sin captcha de terceros. Sin compromiso y sin
+    precios públicos todavía.
+  </p>
+
+  <noscript>
+    <p class="lead-form__status is-error lead-form__field--full">
+      Activa JavaScript para completar la verificación y enviar la solicitud.
+    </p>
+  </noscript>
+</form>
+
+<script>
+  import CaptchaWorker from '../scripts/captcha-worker?worker';
+  import {
+    problemDetail,
+    readLeadForm,
+    toLeadPayload,
+    validateLead,
+    type LeadErrors,
+    type LeadField,
+  } from '../lib/lead';
+  import { saveLeadReceipt } from '../lib/receipt';
+  import { meetsDifficulty, sha256Hex } from '../lib/sha256';
+  import { track } from '../scripts/analytics';
+
+  interface CaptchaChallenge {
+    challenge: string;
+    difficulty: number;
+    expiresAt: string;
+  }
+
+  interface WorkerReply {
+    solution?: string;
+    progress?: number;
+    error?: string;
+  }
+
+  const form = document.querySelector<HTMLFormElement>('[data-demo-form]');
+  const status = document.querySelector<HTMLElement>('[data-status]');
+  const submit = document.querySelector<HTMLButtonElement>('[data-submit]');
+
+  const fieldNames: LeadField[] = ['name', 'company', 'email', 'phone', 'message', 'consent'];
+
+  function setStatus(message: string, isError = false): void {
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle('is-error', isError);
+  }
+
+  function clearErrors(): void {
+    if (!form) return;
+    fieldNames.forEach((field) => {
+      const error = form.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
+      if (error) error.textContent = '';
+      const input = form.querySelector<HTMLElement>(`[name="${field}"]`);
+      if (input) {
+        input.removeAttribute('aria-invalid');
+        input.removeAttribute('aria-describedby');
+      }
+    });
+  }
+
+  function showErrors(errors: LeadErrors): void {
+    if (!form) return;
+    (Object.keys(errors) as LeadField[]).forEach((field) => {
+      const message = errors[field];
+      if (!message) return;
+      const error = form.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
+      if (error) error.textContent = `Error: ${message}`;
+      const input = form.querySelector<HTMLElement>(`[name="${field}"]`);
+      if (input) {
+        input.setAttribute('aria-invalid', 'true');
+        input.setAttribute('aria-describedby', `lead-${field}-error`);
+      }
+    });
+    form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }
+
+  function setBusy(busy: boolean): void {
+    if (!form || !submit) return;
+    form.setAttribute('aria-busy', String(busy));
+    submit.disabled = busy;
+    submit.textContent = busy ? 'Enviando…' : 'Enviar solicitud';
+  }
+
+  async function issueChallenge(): Promise<CaptchaChallenge> {
+    const response = await fetch('/api/v1/captcha', {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { accept: 'application/json' },
+    });
+    if (!response.ok) {
+      throw new Error('No pudimos iniciar la verificación anti-spam. Inténtalo de nuevo.');
+    }
+    const data: unknown = await response.json();
+    if (
+      typeof data !== 'object' ||
+      data === null ||
+      typeof (data as CaptchaChallenge).challenge !== 'string' ||
+      typeof (data as CaptchaChallenge).difficulty !== 'number' ||
+      typeof (data as CaptchaChallenge).expiresAt !== 'string'
+    ) {
+      throw new Error('La verificación anti-spam devolvió una respuesta inesperada.');
+    }
+    return data as CaptchaChallenge;
+  }
+
+  function solveInWorker(challenge: CaptchaChallenge): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let worker: Worker;
+      try {
+        worker = new CaptchaWorker();
+      } catch {
+        reject(new Error('worker_unavailable'));
+        return;
+      }
+
+      let settled = false;
+      const finish = (action: () => void): void => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        worker.terminate();
+        action();
+      };
+
+      const timeout = window.setTimeout(
+        () => finish(() => reject(new Error('worker_timeout'))),
+        12_000,
+      );
+
+      worker.addEventListener('message', (event: MessageEvent<WorkerReply>) => {
+        if (event.data?.solution) {
+          finish(() => resolve(event.data.solution as string));
+        } else if (event.data?.error) {
+          finish(() => reject(new Error(event.data.error ?? 'worker_error')));
+        }
+      });
+
+      worker.addEventListener('error', () => {
+        finish(() => reject(new Error('worker_error')));
+      });
+
+      worker.postMessage({ challenge: challenge.challenge, difficulty: challenge.difficulty });
+    });
+  }
+
+  function solveInMainThread(challenge: CaptchaChallenge): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const deadline = performance.now() + 12_000;
+      let attempt = 0;
+
+      const step = (): void => {
+        const sliceEnd = performance.now() + 22;
+        do {
+          if (performance.now() > deadline) {
+            reject(new Error('timeout'));
+            return;
+          }
+          const solution = String(attempt);
+          if (meetsDifficulty(sha256Hex(`${challenge.challenge}:${solution}`), challenge.difficulty)) {
+            resolve(solution);
+            return;
+          }
+          attempt += 1;
+        } while (performance.now() < sliceEnd);
+        window.setTimeout(step, 0);
+      };
+
+      step();
+    });
+  }
+
+  async function solveChallenge(challenge: CaptchaChallenge): Promise<string> {
+    try {
+      return await solveInWorker(challenge);
+    } catch {
+      setStatus('Verificando la solicitud…');
+      try {
+        return await solveInMainThread(challenge);
+      } catch {
+        throw new Error('La verificación tardó demasiado. Recarga la página e inténtalo de nuevo.');
+      }
+    }
+  }
+
+  if (form && status && submit) {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (submit.disabled) return;
+
+      clearErrors();
+      setStatus('');
+
+      const values = readLeadForm(form);
+      if (values.website.trim() !== '') {
+        setStatus('No se pudo validar el formulario.', true);
+        return;
+      }
+
+      const errors = validateLead(values);
+      if (Object.keys(errors).length > 0) {
+        showErrors(errors);
+        return;
+      }
+
+      setBusy(true);
+      setStatus('Verificando la solicitud… Puede tardar unos segundos.');
+
+      try {
+        const challenge = await issueChallenge();
+        const solution = await solveChallenge(challenge);
+
+        setStatus('Enviando la solicitud…');
+        const response = await fetch('/api/v1/leads', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(toLeadPayload(values, challenge.challenge, solution)),
+        });
+
+        const payload: unknown = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(
+            problemDetail(
+              payload,
+              response.status === 429
+                ? 'Has enviado varias solicitudes. Espera un poco antes de reintentar.'
+                : 'No pudimos registrar la solicitud. Inténtalo de nuevo.',
+            ),
+          );
+        }
+
+        const id =
+          typeof payload === 'object' &&
+          payload !== null &&
+          typeof (payload as { id?: unknown }).id === 'string'
+            ? (payload as { id: string }).id
+            : '';
+
+        if (!id) {
+          throw new Error(
+            'La solicitud se ha enviado, pero no hemos podido obtener la referencia. Escríbenos antes de reintentar.',
+          );
+        }
+
+        saveLeadReceipt(id);
+        track('lead_submitted', { source: form.dataset.source ?? 'landing' });
+        window.location.assign('/gracias');
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'No pudimos enviar la solicitud. Comprueba tu conexión e inténtalo de nuevo.';
+        setStatus(message, true);
+        status.focus();
+        setBusy(false);
+      }
+    });
+
+    form.addEventListener('input', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const field = target.getAttribute('name');
+      if (!field) return;
+      const error = form.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
+      if (error) error.textContent = '';
+      target.removeAttribute('aria-invalid');
+      target.removeAttribute('aria-describedby');
+    });
+  }
+</script>
+
+<style>
+  .lead-form {
+    --field-bg: #fffdf7;
+    --field-ink: var(--as-ink);
+    --field-placeholder: #6d7368;
+    --field-label: var(--as-ink);
+    --field-small: var(--as-muted);
+    --field-error: var(--as-danger);
+    --field-border: var(--as-line);
+    --field-submit: var(--as-accent);
+    --field-submit-ink: var(--as-accent-ink);
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 12px;
+    color: var(--field-ink);
+  }
+
+  .lead-form--dark {
+    --field-bg: #2f6247;
+    --field-ink: var(--as-bg);
+    --field-placeholder: #c5d2c2;
+    --field-label: #e4e9df;
+    --field-small: #d0d9cc;
+    --field-error: #ffd7c7;
+    --field-border: transparent;
+    --field-submit: var(--as-ink);
+    --field-submit-ink: var(--as-bg);
+  }
+
+  .lead-form__field {
+    min-width: 0;
+  }
+
+  .lead-form__field--full {
+    grid-column: 1 / -1;
+  }
+
+  .lead-form__label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--field-label);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .lead-form__optional {
+    color: var(--field-small);
+    font-weight: 400;
+  }
+
+  .lead-form__control {
+    width: 100%;
+    min-height: 52px;
+    padding: 10px 14px;
+    border: 1px solid var(--field-border);
+    border-radius: var(--as-radius-sm);
+    background: var(--field-bg);
+    color: var(--field-ink);
+    font-size: 1rem;
+    line-height: 1.4;
+    transition: border-color var(--as-fast) var(--as-ease-out);
+  }
+
+  .lead-form__control::placeholder {
+    color: var(--field-placeholder);
+    opacity: 1;
+  }
+
+  .lead-form__control[aria-invalid='true'] {
+    border-color: var(--field-error);
+    box-shadow: 0 0 0 1px var(--field-error);
+  }
+
+  .lead-form__textarea {
+    min-height: 104px;
+    padding-block: 12px;
+    resize: vertical;
+  }
+
+  .lead-form__consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--field-label);
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .lead-form__consent input {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 1px 0 0;
+    accent-color: var(--as-ochre);
+  }
+
+  .lead-form__consent a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .lead-form__error {
+    min-height: 0;
+    margin-top: 4px;
+    color: var(--field-error);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .lead-form__error:empty {
+    display: none;
+  }
+
+  .lead-form__honeypot {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .lead-form__submit {
+    grid-column: 1 / -1;
+    min-height: 56px;
+    margin-top: 4px;
+    background: var(--field-submit);
+    color: var(--field-submit-ink);
+  }
+
+  .lead-form__submit:hover {
+    background: var(--field-submit);
+    filter: brightness(0.94);
+  }
+
+  .lead-form__submit:disabled {
+    opacity: 0.72;
+  }
+
+  .lead-form__status {
+    grid-column: 1 / -1;
+    min-height: 22px;
+    color: var(--field-small);
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+
+  .lead-form__status:empty {
+    min-height: 0;
+  }
+
+  .lead-form__status.is-error {
+    color: var(--field-error);
+    font-weight: 500;
+  }
+
+  .lead-form__small {
+    color: var(--field-small);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 560px) {
+    .lead-form {
+      grid-template-columns: 1fr;
+    }
+
+    .lead-form__field--full {
+      grid-column: 1;
+    }
+  }
+</style>

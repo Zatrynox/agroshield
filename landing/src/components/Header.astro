@@ -1,0 +1,228 @@
+---
+import { appUrl } from '../lib/site';
+---
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="/" aria-label="AgroShield, volver al inicio">
+      <span class="brand__mark" aria-hidden="true">
+        <span class="core-mark">
+          <span class="core-mark__band"></span>
+          <span class="core-mark__band"></span>
+          <span class="core-mark__band"></span>
+          <span class="core-mark__band"></span>
+          <span class="core-mark__band"></span>
+          <span class="core-mark__band"></span>
+          <span class="core-mark__band"></span>
+        </span>
+      </span>
+      <span class="brand__name">AgroShield</span>
+    </a>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="site-nav"
+      data-menu-toggle
+    >
+      <span class="sr">Abrir menú</span>
+      <span class="menu-toggle__bars" aria-hidden="true"><span></span><span></span></span>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label="Principal">
+      <a class="site-nav__link" href="/#como-funciona">Cómo funciona</a>
+      <a class="site-nav__link" href="/#capacidades">Capacidades</a>
+      <a class="site-nav__link" href="/#preguntas">Preguntas</a>
+      <a class="site-nav__link" href="/#contacto">Contacto</a>
+      <a
+        class="site-nav__login"
+        href={appUrl}
+        data-session-link
+        data-event="login_click"
+        data-event-placement="header"
+      >Iniciar sesión</a>
+      <a
+        class="button site-nav__cta"
+        href="/demo"
+        data-event="cta_demo_click"
+        data-event-placement="header"
+      >Solicitar una demo</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  import { initSessionLink } from '../scripts/session-link';
+  import { initMobileMenu } from '../scripts/mobile-menu';
+
+  initSessionLink();
+  initMobileMenu();
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--as-bg);
+    color: var(--as-ink);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--as-space-5);
+    width: 100%;
+    max-width: var(--as-max);
+    min-height: 76px;
+    margin-inline: auto;
+    padding-inline: var(--as-margin);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--as-ink);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    text-decoration: none;
+  }
+
+  .brand__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: var(--as-accent);
+  }
+
+  .brand__mark .core-mark {
+    width: 14px;
+    height: 23px;
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(18px, 2.4vw, 32px);
+  }
+
+  .site-nav__link {
+    color: var(--as-ink);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    text-decoration: none;
+    transition: opacity var(--as-base) var(--as-ease-out);
+  }
+
+  .site-nav__link:hover {
+    opacity: 0.65;
+  }
+
+  .site-nav__login {
+    color: var(--as-ink);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+  }
+
+  .site-nav__login:hover {
+    opacity: 0.65;
+  }
+
+  .site-nav__cta {
+    min-height: 44px;
+    padding: 9px 17px;
+    font-size: 0.9375rem;
+  }
+
+  .menu-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--as-radius-sm);
+    background: var(--as-surface);
+  }
+
+  .menu-toggle__bars {
+    display: grid;
+    gap: 5px;
+    width: 20px;
+  }
+
+  .menu-toggle__bars span {
+    display: block;
+    height: 2px;
+    background: var(--as-ink);
+    transition: transform var(--as-base) var(--as-ease-out);
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle__bars span:first-child {
+    transform: translateY(3.5px) rotate(45deg);
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle__bars span:last-child {
+    transform: translateY(-3.5px) rotate(-45deg);
+  }
+
+  @media (max-width: 920px) {
+    .menu-toggle {
+      display: inline-flex;
+    }
+
+    .site-nav {
+      position: fixed;
+      inset: 76px 0 auto;
+      display: grid;
+      gap: 0;
+      padding: 16px var(--as-margin) 28px;
+      background: var(--as-bg);
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition:
+        opacity var(--as-base) var(--as-ease-out),
+        transform var(--as-base) var(--as-ease-out),
+        visibility var(--as-base);
+    }
+
+    .site-nav.is-open {
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+    }
+
+    .site-nav__link,
+    .site-nav__login {
+      padding: 14px 0;
+      font-size: 1.125rem;
+    }
+
+    .site-nav__cta {
+      margin-top: 14px;
+      min-height: 52px;
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .site-header__inner {
+      min-height: 68px;
+    }
+
+    .site-nav {
+      inset-block-start: 68px;
+    }
+  }
+</style>

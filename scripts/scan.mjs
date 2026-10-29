@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+/**
+ * Container vulnerability and secret scans, using pinned images.
+ *
+ *   node scripts/scan.mjs secrets
+ *   node scripts/scan.mjs images
+ *   node scripts/scan.mjs all
+ *
+ * Requires Docker. Exits non-zero on findings so it is safe to use in CI.
+ */
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const gitleaksImage =
+  'zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f';
+const trivyImage =
+  'aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c';
+
+function run(args) {
+  console.log(`\n> docker ${args.join(' ')}`);
+  const result = spawnSync('docker', args, { stdio: 'inherit', shell: false });
+  if (result.error) {
+    console.error(result.error.message);
+    process.exit(1);
+  }
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
+function requireDocker() {
+  const result = spawnSync('docker', ['--version'], { stdio: 'ignore', shell: false });
+  if (result.status !== 0) {
+    console.error('Docker is required for scans. Start Docker Desktop and retry.');
+    process.exit(1);
+  }
+}
+
+function scanSecrets() {
+  run([
+    'run',
+    '--rm',
+    '-v',
+    `${root}:/repo`,
+    '-w',
+    '/repo',
+    gitleaksImage,
+    'detect',
+    '--source',
+    '/repo',
+    '--no-git',
+    '--config',
+    '/repo/.gitleaks.toml',
+    '--redact',
+    '--verbose',
+  ]);
+}
+
+function scanImage(name) {
+  run([
+    'run',
+    '--rm',
+    '-v',
+    '/var/run/docker.sock:/var/run/docker.sock',
+    trivyImage,
+    'image',
+    '--scanners',
+    'vuln',
+    '--severity',
+    'HIGH,CRITICAL',
+    '--ignore-unfixed',
+    '--exit-code',
+    '1',
+    name,
+  ]);
+}
+
+function scanImages() {
+  for (const image of ['agroshield-backend:local', 'agroshield-web:local']) {
+    scanImage(image);
+  }
+}
+
+const command = process.argv[2];
+if (!['secrets', 'images', 'all'].includes(command)) {
+  console.error('Usage: node scripts/scan.mjs <secrets|images|all>');
+  process.exit(1);
+}
+
+requireDocker();
+if (command === 'secrets' || command === 'all') scanSecrets();
+if (command === 'images' || command === 'all') scanImages();

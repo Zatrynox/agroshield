@@ -1,0 +1,244 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege by default. No job publishes images or writes to the repo.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  # Chromium is not needed for unit tests; keep installs small and fast.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+  NODE_VERSION: "24.15.0"
+  PNPM_VERSION: "11.1.2"
+
+jobs:
+  quality:
+    name: Typecheck, tests and builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck every package
+        run: pnpm typecheck
+
+      - name: Run unit and integration tests
+        run: pnpm test
+
+      - name: Build every package
+        run: pnpm build
+
+      - name: Validate infrastructure definitions
+        run: node scripts/validate-infra.mjs
+
+  infra:
+    name: Compose and Caddy validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CADDY_IMAGE: caddy:2.11.7-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+      # Dummy values so `docker compose config` can render compose.prod.yaml.
+      # None of these are used to start a service in this job.
+      PROD_SITE_DOMAIN: agroshield.example
+      PROD_ACME_EMAIL: ops@agroshield.example
+      PROD_POSTGRES_PASSWORD: ci-only-not-a-real-password
+      PROD_DATABASE_URL: postgresql://agroshield:ci-only-not-a-real-password@db:5432/agroshield
+      PROD_SESSION_SECRET: ci-only-session-secret-0123456789abcdef0123456789abcdef
+      PROD_LEGAL_ENTITY: AgroShield CI
+      PROD_LEGAL_ADDRESS: CI only
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Docker is available
+        run: docker run --rm hello-world
+
+      - name: Render the local stack
+        run: docker compose -f compose.yaml config -q
+
+      - name: Render the hot-reload stack
+        run: docker compose -f compose.dev.yaml config -q
+
+      - name: Render the production stack
+        run: docker compose -f compose.prod.yaml config -q
+
+      - name: Validate the local Caddyfile
+        run: |
+          docker run --rm \
+            -v "$PWD/infra/docker/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            -e WEB_PORT=8080 \
+            "$CADDY_IMAGE" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Validate the production Caddyfile
+        run: |
+          docker run --rm \
+            -v "$PWD/infra/docker/Caddyfile.prod:/etc/caddy/Caddyfile.prod:ro" \
+            -e SITE_ADDRESS=https://agroshield.example \
+            -e ACME_EMAIL=ops@agroshield.example \
+            -e API_UPSTREAM=backend:3000 \
+            "$CADDY_IMAGE" caddy validate --config /etc/caddy/Caddyfile.prod --adapter caddyfile
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail on tracked environment files
+        run: |
+          set -euo pipefail
+          tracked="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$' || true)"
+          if [ -n "$tracked" ]; then
+            echo "Real environment files must never be tracked:"
+            echo "$tracked"
+            exit 1
+          fi
+          echo "No real .env files are tracked."
+
+      - name: Scan the working tree for secrets
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            detect --source /repo --no-git --config /repo/.gitleaks.toml --redact --verbose
+
+      - name: Scan git history for secrets
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            detect --source /repo --config /repo/.gitleaks.toml --redact --verbose
+
+  containers:
+    name: Images, vulnerability scan and stack smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Docker is available
+        run: docker run --rm hello-world
+
+      - name: Build the backend image
+        run: |
+          docker build \
+            -f infra/docker/backend.Dockerfile \
+            -t agroshield-backend:ci \
+            .
+
+      - name: Build the web image
+        run: |
+          docker build \
+            -f infra/docker/web.Dockerfile \
+            -t agroshield-web:ci \
+            --build-arg PUBLIC_SITE_NAME=AgroShield \
+            --build-arg PUBLIC_LANDING_URL=http://localhost:8080 \
+            --build-arg PUBLIC_APP_URL=http://localhost:8080/app \
+            --build-arg PUBLIC_DEMO_MODE=true \
+            --build-arg PUBLIC_LEGAL_ENTITY="AgroShield CI" \
+            --build-arg PUBLIC_LEGAL_ADDRESS="CI only" \
+            .
+
+      - name: Scan backend and web images for fixable HIGH/CRITICAL CVEs
+        run: |
+          for image in agroshield-backend:ci agroshield-web:ci; do
+            echo "Scanning $image"
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c \
+              image --scanners vuln --severity HIGH,CRITICAL \
+              --ignore-unfixed --exit-code 1 "$image"
+          done
+
+      - name: Start the local demo stack
+        run: |
+          docker compose -f compose.yaml up -d --build
+
+      - name: Smoke-test the running stack
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://127.0.0.1:8080/healthz \
+              && curl -fsS -o /dev/null http://127.0.0.1:8080/api/health; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              echo "The stack did not become ready in time."
+              docker compose -f compose.yaml ps
+              docker compose -f compose.yaml logs --tail=200
+              exit 1
+            fi
+            sleep 2
+          done
+
+          check() {
+            description="$1"
+            url="$2"
+            expected="$3"
+            status="$(curl -sS -o /dev/null -w '%{http_code}' "$url")"
+            if [ "$status" != "$expected" ]; then
+              echo "FAIL: $description returned $status (expected $expected)"
+              exit 1
+            fi
+            echo "ok: $description ($status)"
+          }
+
+          check "landing home" "http://127.0.0.1:8080/" 200
+          check "landing demo page" "http://127.0.0.1:8080/demo" 200
+          check "landing 404" "http://127.0.0.1:8080/does-not-exist" 404
+          check "app shell" "http://127.0.0.1:8080/app/" 200
+          check "app deep link" "http://127.0.0.1:8080/app/login" 200
+          check "API health" "http://127.0.0.1:8080/api/health" 200
+          check "unauthenticated farms" "http://127.0.0.1:8080/api/v1/farms" 401
+          check "OpenAPI JSON" "http://127.0.0.1:8080/documentation/json" 200
+
+          login_status="$(curl -sS -o /tmp/login.json -w '%{http_code}' \
+            -H 'content-type: application/json' \
+            -d '{"email":"demo@agroshield.example","password":"Demo-AgroShield-2026!"}' \
+            http://127.0.0.1:8080/api/v1/auth/login)"
+          if [ "$login_status" != "200" ]; then
+            echo "FAIL: demo login returned $login_status"
+            cat /tmp/login.json
+            exit 1
+          fi
+          echo "ok: demo login (200)"
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose -f compose.yaml logs --tail=300
+
+      - name: Stop the local stack
+        if: always()
+        run: docker compose -f compose.yaml down -v --remove-orphans

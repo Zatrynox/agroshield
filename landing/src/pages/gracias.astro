@@ -1,0 +1,169 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CoreMark from '../components/CoreMark.astro';
+---
+
+<BaseLayout
+  title="Estado de la solicitud — AgroShield"
+  description="Estado de la solicitud de demo de AgroShield."
+  path="/gracias"
+  noindex
+>
+  <section class="thanks" aria-labelledby="thanks-title">
+    <div class="container thanks__inner">
+      <div class="thanks__mark" aria-hidden="true">
+        <CoreMark />
+      </div>
+
+      <h1 id="thanks-title" data-thanks-title>Solicitud de demo</h1>
+      <p class="thanks__lead" data-thanks-lead>
+        Esta página solo puede confirmar un envío realizado en este navegador.
+      </p>
+
+      <div data-thanks-received hidden>
+        <p class="thanks__reference">
+          Referencia <strong data-thanks-ref></strong>
+        </p>
+        <p class="thanks__note">
+          Gracias por escribir. Te responderemos al correo que indicaste para acordar
+          la demo. Si necesitas añadir algo, responde al correo de contacto o vuelve a
+          enviar el formulario indicándolo. No compartas datos sensibles por aquí.
+        </p>
+        <div class="thanks__actions">
+          <a class="button" href="/">Volver al inicio</a>
+          <a class="text-link" href="/#como-funciona">Ver cómo funciona</a>
+        </div>
+      </div>
+
+      <div data-thanks-missing hidden>
+        <p class="thanks__note">
+          No encontramos una confirmación en esta pestaña. Si acabas de enviar el
+          formulario, vuelve a intentarlo; si el problema continúa, escríbenos desde
+          la página de demo.
+        </p>
+        <div class="thanks__actions">
+          <a class="button" href="/demo">Ir al formulario</a>
+          <a class="text-link" href="/">Volver al inicio</a>
+        </div>
+      </div>
+
+      <noscript>
+        <p class="notice notice--clay">
+          Activa JavaScript para comprobar el estado de la solicitud. El formulario de
+          demo también necesita JavaScript para la verificación anti-spam.
+        </p>
+      </noscript>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { readLeadReceipt } from '../lib/receipt';
+  import { shortReference } from '../lib/lead';
+
+  const title = document.querySelector<HTMLElement>('[data-thanks-title]');
+  const lead = document.querySelector<HTMLElement>('[data-thanks-lead]');
+  const received = document.querySelector<HTMLElement>('[data-thanks-received]');
+  const missing = document.querySelector<HTMLElement>('[data-thanks-missing]');
+  const reference = document.querySelector<HTMLElement>('[data-thanks-ref]');
+  const receipt = readLeadReceipt();
+
+  if (title && lead && received && missing) {
+    if (receipt) {
+      title.textContent = 'Hemos recibido tu solicitud.';
+      lead.textContent =
+        'Gracias por escribir. Te responderemos al correo que indicaste para acordar la demo.';
+      if (reference) reference.textContent = shortReference(receipt.id);
+      received.hidden = false;
+      document.title = 'Solicitud recibida — AgroShield';
+    } else {
+      title.textContent = 'No encontramos una solicitud.';
+      lead.textContent =
+        'Esta página solo muestra el resultado de un envío completado en esta pestaña.';
+      missing.hidden = false;
+      document.title = 'No encontramos la solicitud — AgroShield';
+    }
+  }
+</script>
+
+<style>
+  .thanks {
+    display: flex;
+    align-items: center;
+    min-height: calc(100svh - 76px);
+    padding-block: clamp(64px, 10vw, 120px);
+    background: var(--as-bg);
+  }
+
+  .thanks__inner {
+    max-width: 760px;
+  }
+
+  .thanks__mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 36px;
+    background: var(--as-accent);
+  }
+
+  .thanks__mark .core-mark {
+    width: 18px;
+    height: 30px;
+  }
+
+  .thanks h1 {
+    max-width: 14ch;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 0.94;
+  }
+
+  .thanks__lead {
+    max-width: 46ch;
+    margin-top: 22px;
+    color: var(--as-muted);
+    font-size: var(--as-step-lead);
+    line-height: 1.45;
+  }
+
+  .thanks__reference {
+    margin-top: 28px;
+    color: var(--as-muted);
+    font-size: 0.9375rem;
+  }
+
+  .thanks__reference strong {
+    color: var(--as-ink);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .thanks__note {
+    max-width: 48ch;
+    margin-top: 22px;
+    color: var(--as-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .thanks__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 28px;
+    margin-top: 36px;
+  }
+
+  @media (max-width: 680px) {
+    .thanks__actions {
+      display: grid;
+      gap: 14px;
+    }
+
+    .thanks__actions .button {
+      width: 100%;
+    }
+  }
+</style>
