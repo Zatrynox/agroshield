@@ -2,7 +2,7 @@
 
 Registro reanudable de la entrega `0.1.0`. Última actualización: **2026-10-29** (hora local del registro de QA).
 
-> **Commit de referencia:** se completará al crear el commit inicial en `main`. Mientras no exista commit, el estado vive en el árbol de trabajo.
+> **Commit de referencia:** `8ae7442` — `feat: deliver AgroShield demo platform` (commit inicial en `main`, 2026-10-29).
 
 ## 1. Dónde está el proyecto
 
@@ -10,7 +10,7 @@ Registro reanudable de la entrega `0.1.0`. Última actualización: **2026-10-29*
 C:\Users\vcris\OneDrive\Escritorio\AgroShield
 ```
 
-- Rama: `main` (sin commits al empezar; el commit inicial se crea al cerrar esta entrega).
+- Rama: `main`; commit inicial `8ae7442`. El árbol de trabajo queda limpio tras registrar este estado.
 - Workspace pnpm con `backend/`, `frontend/`, `landing/` y `packages/design-tokens/`.
 - Node `24.15.0`, pnpm `11.1.2`.
 - Docker **no disponible** en esta máquina (Docker Desktop requiere UAC).
@@ -37,7 +37,7 @@ C:\Users\vcris\OneDrive\Escritorio\AgroShield
 
 ### P0 — Bloquea el lanzamiento
 
-- [ ] **Crear el commit inicial** en `main` y actualizar este documento con el hash.
+- [x] **Crear el commit inicial** en `main` (`8ae7442`) y actualizar este documento con el hash.
 - [ ] **Ejecutar CI completo** (`.github/workflows/ci.yml`): quality, infra, secrets, containers.
 - [ ] **Verificar Docker en un host con Docker Desktop/Engine:**
   - `docker run --rm hello-world`
