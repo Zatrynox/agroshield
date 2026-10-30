@@ -130,7 +130,7 @@ check('prod Caddyfile enables HSTS', read('infra/docker/Caddyfile.prod').include
 check('prod Caddyfile has a health endpoint', read('infra/docker/Caddyfile.prod').includes('/healthz'));
 check(
   'OpenAPI documents the Zod route schemas',
-  read('backend/src/shared/http/app.ts').includes('transform: jsonSchemaTransform'),
+  read('backend/src/app.ts').includes('transform: jsonSchemaTransform'),
 );
 
 const caddy = process.env.CADDY_BIN || 'caddy';

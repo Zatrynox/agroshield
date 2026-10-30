@@ -2,7 +2,7 @@
 
 Lista de comprobaciones para pasar de la demo `0.1.0` a un entorno real. Las casillas marcadas se verificaron en la máquina de desarrollo; las pendientes bloquean o condicionan el lanzamiento.
 
-> **Regla:** no se considera “hecho” nada que solo esté escrito. Docker, Trivy, Gitleaks y el stack de producción **no se ejecutaron localmente**; su verificación depende de CI y de un host con Docker.
+> **Regla:** no se considera “hecho” nada que solo esté escrito. El stack local, las imágenes, Trivy y Gitleaks se ejecutaron y verificaron el 2026-10-30; el stack de producción y CI siguen pendientes.
 
 ## 1. Alcance y producto
 
@@ -39,7 +39,7 @@ Lista de comprobaciones para pasar de la demo `0.1.0` a un entorno real. Las cas
 - [ ] `COOKIE_SECURE=true`, `TRUST_PROXY=true`, `DEMO_MODE=false`, `ENABLE_API_DOCS=false`.
 - [ ] `CORS_ORIGINS` solo HTTPS y solo el dominio real.
 - [ ] Confirmar que `.env`, `infra/env/prod.env`, `*.pem`, `*.key` e `infra/certs/` no están versionados.
-- [ ] Ejecutar Gitleaks sobre working tree e historial.
+- [x] Ejecutar Gitleaks sobre working tree e historial — limpio el 2026-10-30.
 - [ ] Rotar cualquier secreto que haya estado expuesto.
 
 ## 4. Calidad y pruebas
@@ -52,8 +52,8 @@ Lista de comprobaciones para pasar de la demo `0.1.0` a un entorno real. Las cas
 - [x] Smoke de API en vivo — 23/23.
 - [x] UI QA — 39/39; axe 0 violaciones en 6 pantallas.
 - [x] Lighthouse móvil home 97/100/100/100; demo 99/100/100/100; escritorio 100/100/100/100.
-- [ ] Repetir typecheck, tests, build, enlaces y smoke sobre el commit final.
-- [ ] Ejecutar UI QA sobre el build de producción servido por Caddy, no solo sobre dev.
+- [x] Repetir typecheck, tests, build, enlaces y smoke sobre el árbol final — 2026-10-30.
+- [ ] Ejecutar UI QA sobre el build de producción servido por Caddy, no solo sobre dev. Los endpoints y el login del stack se comprobaron; el QA de navegador completo sigue siendo local sobre dev/preview.
 - [ ] Añadir pruebas E2E al pipeline de CI (hoy el QA de navegador es local).
 - [ ] Revisar cobertura de reglas de dominio y casos límite de cuenta atrás.
 
@@ -78,28 +78,28 @@ Lista de comprobaciones para pasar de la demo `0.1.0` a un entorno real. Las cas
 
 ## 6. Infraestructura
 
-- [ ] `docker run --rm hello-world` en el host de despliegue.
-- [ ] `docker compose -f compose.yaml config -q`.
-- [ ] `docker compose -f compose.dev.yaml config -q`.
-- [ ] `docker compose --env-file infra/env/prod.env -f compose.prod.yaml config -q`.
-- [ ] Validar ambos Caddyfiles con Caddy 2.11.7.
-- [ ] Construir `agroshield-backend` y `agroshield-web`.
-- [ ] Escanear ambas imágenes con Trivy (HIGH/CRITICAL corregibles).
-- [ ] Levantar el stack local y probar landing, demo, 404, app, deep link, API, 401, OpenAPI y login demo.
+- [x] `docker run --rm hello-world` en el host de desarrollo.
+- [x] `docker compose -f compose.yaml config -q`.
+- [x] `docker compose -f compose.dev.yaml config -q`.
+- [x] `docker compose --env-file <env-de-prueba> -f compose.prod.yaml config -q` (sin secretos reales).
+- [x] Validar ambos Caddyfiles con Caddy 2.11.7 (binario propio del contenedor).
+- [x] Construir `agroshield-backend` y `agroshield-web`.
+- [x] Escanear ambas imágenes con Trivy (HIGH/CRITICAL corregibles) — 0 hallazgos.
+- [x] Levantar el stack local y probar landing, demo, 404, app, deep link, API, 401, OpenAPI y login demo — smoke 23/23 en `8088`.
 - [ ] Levantar el stack de producción con TLS real y probar HSTS, cookies `Secure`, CORS y redirecciones.
-- [ ] Verificar que Postgres y backend no están publicados.
-- [ ] Verificar healthchecks, reinicio y logs rotados.
+- [x] Verificar que Postgres y backend no están publicados.
+- [ ] Verificar reinicio y logs rotados (los healthchecks están activos).
 - [ ] Configurar backups cifrados de Postgres y probar restauración.
 - [ ] Configurar monitorización, alertas y retención de logs.
 - [ ] Verificar límites de CPU/memoria bajo carga.
 - [ ] Fijar GitHub Actions por SHA y añadir firma/procedencia de imágenes.
 
-> **Estado local:** Docker Desktop no pudo instalarse sin UAC. Las casillas de esta sección están **pendientes**; los archivos se validaron estáticamente y Caddy 2.11.7 validó los Caddyfiles. CI cubre hello-world, builds, Trivy, Gitleaks y smoke.
+> **Estado local (2026-10-30):** Docker Desktop funciona. `hello-world`, configuración de Compose, builds, Trivy, Gitleaks y el smoke local están ejecutados. El puerto `8080` estaba ocupado por `httpd.exe`, así que el stack se publicó en `8088` con un override temporal no versionado. Quedan pendientes el stack de producción con TLS real, el reinicio/logs y CI.
 
 ## 7. Datos y operación
 
 - [ ] Confirmar que el seed **no** se ejecutará en producción (no existe en `compose.prod.yaml`).
-- [ ] Limpiar leads `[E2E]` y `Finca QA` de la base local antes de compartirla.
+- [x] Limpiar leads `[E2E]` y `Finca QA` de la base local antes de compartirla — base Docker restaurada a 5 alertas, 0 leads y 0 eventos el 2026-10-30.
 - [ ] Definir proceso de alta de organización, miembros y roles.
 - [ ] Definir proceso de aprovisionamiento y revocación de sensores.
 - [ ] Definir proceso de importación de datos reales (no incluido).
@@ -151,6 +151,7 @@ El lanzamiento puede considerarse listo cuando:
 | Fecha | Entorno | Resultado | Notas |
 | --- | --- | --- | --- |
 | 2026-10-29 | Host local (Windows, Node 24.15.0) | Typecheck, 77 tests, build, 73 enlaces, 23 API, 39 UI, axe 0, Lighthouse OK | Docker/Trivy/Gitleaks no disponibles |
+| 2026-10-30 | Host local + Docker 29.9.2 / Compose v5.6.1 | Typecheck, lint, 77 tests, build, 73 enlaces, 23 API, hello-world, 3 Compose, builds, Trivy 0, Gitleaks limpio | Stack local en `8088` por conflicto con `httpd.exe`; producción y CI pendientes |
 | pendiente | CI | — | Ejecutar workflow completo |
 | pendiente | Producción | — | Requiere dominio, secretos y legal |
 

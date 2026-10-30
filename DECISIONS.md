@@ -6,11 +6,11 @@ Registro de las decisiones que sostienen la entrega `0.1.0`. Cada entrada indica
 
 ### D1. Entrega demo verificable, no producción
 
-**Contexto:** el encargo pide una plataforma completa con infraestructura, pero no hay dominio, identidad legal, credenciales reales ni Docker disponible en la máquina.
+**Contexto:** el encargo pide una plataforma completa con infraestructura, pero no hay dominio, identidad legal ni credenciales reales. Docker Desktop sí se pudo arrancar durante la entrega.
 
 **Decisión:** entregar una demo funcional y honesta, con datos sembrados explícitamente etiquetados, límites documentados y un checklist de lanzamiento. No se inventan clientes, métricas, testimonios ni resultados agronómicos.
 
-**Consecuencia:** todo lo que no se pudo verificar (Docker, Trivy, Gitleaks, TLS real) queda declarado como pendiente y cubierto por CI, no como hecho.
+**Consecuencia:** el stack local, las imágenes, Trivy y Gitleaks se verificaron en la máquina; lo que sigue sin verificar (TLS real, producción, CI) queda declarado como pendiente, no como hecho.
 
 ### D2. Contextos implementados y contextos ausentes
 
@@ -200,19 +200,19 @@ Registro de las decisiones que sostienen la entrega `0.1.0`. Cada entrada indica
 
 ### D25. Pirámide de pruebas y QA de navegador
 
-**Decisión:** 41 pruebas de backend (dominio, integración PGlite, contrato OpenAPI), 13 de frontend y 23 de landing; además 39 comprobaciones de UI con Playwright/axe, 23 de API en vivo y 70 de enlaces.
+**Decisión:** 41 pruebas de backend (dominio, integración PGlite, contrato OpenAPI), 13 de frontend y 23 de landing; además 39 comprobaciones de UI con Playwright/axe, 23 de API en vivo y 73 de enlaces.
 
 **Motivo:** cubrir reglas, contrato, persistencia y los flujos que solo se ven en navegador.
 
 **Consecuencia:** el QA de UI requiere seed, tres servidores y Chrome; no corre en CI de calidad. Los smoke de API y UI son locales; CI cubre build, tests, infra y el stack Docker.
 
-### D26. Docker no verificado localmente
+### D26. Docker local verificado; producción y CI pendientes
 
-**Contexto:** Docker Desktop no se pudo instalar sin UAC.
+**Contexto:** Docker Desktop se pudo arrancar, pero el puerto `8080` del host está ocupado por `httpd.exe` y no hay dominio, TLS ni secretos de producción.
 
-**Decisión:** validar estáticamente Compose/Dockerfiles/Caddy, validar Caddy con el binario 2.11.7 y dejar la ejecución real (hello-world, builds, Trivy, Gitleaks, smoke) en CI.
+**Decisión:** verificar el stack local completo (hello-world, Compose, builds, Trivy, Gitleaks y smoke) publicando el puerto `8088` con un override temporal no versionado. Mantener `8080` como puerto por defecto en `compose.yaml`. No ejecutar el stack de producción.
 
-**Consecuencia:** no se afirma que el stack se haya ejecutado en esta máquina. El checklist y el README lo declaran. CI es la fuente de verdad para contenedores.
+**Consecuencia:** el stack local y las imágenes están verificados; el `8088` es una particularidad del host, no del repositorio. El stack de producción y CI siguen siendo la fuente de verdad pendiente para el lanzamiento.
 
 ### D27. Imágenes fijadas por digest y CI con acciones por tag
 
@@ -243,3 +243,19 @@ Registro de las decisiones que sostienen la entrega `0.1.0`. Cada entrada indica
 **Decisión:** no hay dumps, claves privadas reales, correos de clientes ni métricas internas. Las claves de demo se generan en `.data/` y están ignoradas.
 
 **Consecuencia:** cualquier dato real debe llegar por un proceso de importación que no forma parte de esta entrega.
+
+### D31. Caddy recompilado para eliminar CVEs HIGH
+
+**Contexto:** el binario de `caddy:2.11.7-alpine` usa Go `1.26.8` y arrastra CVEs HIGH de la stdlib, `x/net` y `go-jose`. Además, el binario upstream tiene una file capability que falla con `cap_drop: ALL`.
+
+**Decisión:** compilar Caddy `2.11.7` como dependencia de módulo con Go `1.27.3`, parchear `go-jose` a `4.1.6` y `x/net` a `0.60.0`, y copiar el binario estático resultante a la imagen runtime. El entrypoint replica `cmd/caddy/main.go` para registrar los módulos estándar.
+
+**Consecuencia:** Trivy no encuentra vulnerabilidades HIGH/CRITICAL corregibles en la imagen web y Caddy arranca como no-root con `cap_drop: ALL`. Actualizar Caddy exige revisar el `go.mod` generado y repetir el escaneo.
+
+### D32. Gitleaks escanea una instantánea, no el árbol con datos locales
+
+**Contexto:** `gitleaks detect --no-git` leía `backend/.data/demo-keys/sensors.json`, un archivo ignorado por git que contiene claves de demo generadas por el seed, y lo reportaba como falso positivo.
+
+**Decisión:** copiar a un directorio temporal los archivos rastreados y los no ignorados (`git ls-files --cached --others --exclude-standard`) y escanear esa instantánea; además, escanear el historial completo por separado.
+
+**Consecuencia:** el escaneo cubre lo que realmente se commitearía sin leer secretos locales ignorados. El volumen de caché de Trivy (`agroshield-trivy-cache`) evita descargar la base de vulnerabilidades en cada ejecución.

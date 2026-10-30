@@ -109,21 +109,24 @@ Cross-Origin-Resource-Policy: same-origin
 - Healthchecks y dependencias ordenadas.
 - Producción: TLS con ACME, HSTS, cookies seguras, CORS HTTPS, `TRUST_PROXY=true`, `DEMO_MODE=false`, docs desactivadas.
 - El backend rechaza secretos de ejemplo, base no PostgreSQL y cookies inseguras en producción.
+- La imagen web recompila Caddy `2.11.7` con Go `1.27.3` y parchea `go-jose` `4.1.6` y `x/net` `0.60.0`; el binario resultante no tiene file capabilities y es compatible con `cap_drop: ALL`.
+- El runtime del backend aplica `apk upgrade` y elimina npm/corepack, que no se usan en ejecución.
 - Límites de CPU/memoria y logs rotados.
 
 ### Verificación
 
-| Comprobación | Estado local | Dónde se verifica |
+| Comprobación | Estado local (2026-10-30) | Dónde se verifica |
 | --- | --- | --- |
-| `docker run --rm hello-world` | **No ejecutado** (sin Docker) | CI `infra` y `containers` |
-| Render de los tres Compose | Validado estáticamente | CI `infra` |
-| Validación de Caddy local/prod | Validado con Caddy 2.11.7 | CI `infra` |
-| Build de imágenes | **No ejecutado** | CI `containers` |
-| Trivy HIGH/CRITICAL | **No ejecutado** | CI `containers` |
-| Gitleaks working tree/historial | **No ejecutado** | CI `secrets` |
-| Smoke del stack y login demo | **No ejecutado** | CI `containers` |
+| `docker run --rm hello-world` | **Ejecutado** | Local y CI `infra`/`containers` |
+| Render de los tres Compose | **Ejecutado** (local y dev; prod con un env de prueba) | Local y CI `infra` |
+| Validación de Caddy local/prod | **Ejecutado** con Caddy 2.11.7 (binario propio) | Local y CI `infra` |
+| Build de imágenes | **Ejecutado** (`agroshield-backend:local`, `agroshield-web:local`) | Local y CI `containers` |
+| Trivy HIGH/CRITICAL | **0 corregibles** en ambas imágenes | Local y CI `containers` |
+| Gitleaks working tree/historial | **Limpio** en ambos | Local y CI `secrets` |
+| Smoke del stack y login demo | **23/23** en `http://localhost:8088` | Local y CI `containers` |
+| Stack de producción con TLS real | **No ejecutado** | Host de despliegue |
 
-No se afirma que estas comprobaciones se hayan ejecutado en la máquina de desarrollo.
+El puerto `8080` de esta máquina estaba ocupado por `httpd.exe`; el stack local se publicó en `8088` con un override temporal no versionado. El stack de producción no se ejecutó porque requiere dominio, TLS/ACME, secretos reales e identidad legal. Gitleaks escanea una instantánea de archivos rastreados y no ignorados para no leer claves locales de `backend/.data`.
 
 ## Secretos
 
@@ -136,7 +139,7 @@ No se afirma que estas comprobaciones se hayan ejecutado en la máquina de desar
 
 ## Hardening pendiente antes de producción
 
-1. Ejecutar y aprobar CI completo (Docker, Trivy, Gitleaks, smoke).
+1. Ejecutar y aprobar CI completo en un remoto (Docker, Trivy, Gitleaks, smoke); el equivalente local ya pasó.
 2. Sustituir `script-src 'unsafe-inline'` por nonces/hashes.
 3. Añadir verificación de correo, recuperación de contraseña y MFA.
 4. Definir retención y purga de leads, analítica y sesiones.

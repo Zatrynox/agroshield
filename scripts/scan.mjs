@@ -9,7 +9,9 @@
  * Requires Docker. Exits non-zero on findings so it is safe to use in CI.
  */
 import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -36,12 +38,38 @@ function requireDocker() {
   }
 }
 
+function trackedSnapshot() {
+  const listed = spawnSync(
+    'git',
+    ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+    { cwd: root, encoding: 'buffer' },
+  );
+  if (listed.error) throw listed.error;
+  if (listed.status !== 0) throw new Error('git ls-files failed while preparing the secret scan.');
+
+  const snapshot = mkdtempSync(join(tmpdir(), 'agroshield-gitleaks-'));
+  process.on('exit', () => rmSync(snapshot, { recursive: true, force: true }));
+
+  for (const relative of listed.stdout.toString('utf8').split('\0').filter(Boolean)) {
+    const source = resolve(root, relative);
+    if (!existsSync(source) || !statSync(source).isFile()) continue;
+    const target = resolve(snapshot, relative);
+    mkdirSync(dirname(target), { recursive: true });
+    copyFileSync(source, target);
+  }
+  return snapshot;
+}
+
 function scanSecrets() {
+  // Scan a snapshot of tracked plus untracked-but-not-ignored files. A plain
+  // `--no-git` scan also reads local runtime data such as backend/.data keys,
+  // which are gitignored and must never be mistaken for committed secrets.
+  const snapshot = trackedSnapshot();
   run([
     'run',
     '--rm',
     '-v',
-    `${root}:/repo`,
+    `${snapshot}:/repo`,
     '-w',
     '/repo',
     gitleaksImage,
@@ -56,14 +84,36 @@ function scanSecrets() {
   ]);
 }
 
+function scanSecretsHistory() {
+  run([
+    'run',
+    '--rm',
+    '-v',
+    `${root}:/repo`,
+    '-w',
+    '/repo',
+    gitleaksImage,
+    'detect',
+    '--source',
+    '/repo',
+    '--config',
+    '/repo/.gitleaks.toml',
+    '--redact',
+    '--verbose',
+  ]);
+}
+
 function scanImage(name) {
   run([
     'run',
     '--rm',
     '-v',
     '/var/run/docker.sock:/var/run/docker.sock',
+    '-v',
+    'agroshield-trivy-cache:/root/.cache/trivy',
     trivyImage,
     'image',
+    '--quiet',
     '--scanners',
     'vuln',
     '--severity',
@@ -88,5 +138,8 @@ if (!['secrets', 'images', 'all'].includes(command)) {
 }
 
 requireDocker();
-if (command === 'secrets' || command === 'all') scanSecrets();
+if (command === 'secrets' || command === 'all') {
+  scanSecrets();
+  scanSecretsHistory();
+}
 if (command === 'images' || command === 'all') scanImages();

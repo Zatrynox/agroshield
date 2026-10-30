@@ -1,8 +1,8 @@
 # Estado y trabajo pendiente — AgroShield
 
-Registro reanudable de la entrega `0.1.0`. Última actualización: **2026-10-29** (hora local del registro de QA).
+Registro reanudable de la entrega `0.1.0`. Última actualización: **2026-10-30**.
 
-> **Commit de referencia:** `8ae7442` — `feat: deliver AgroShield demo platform` (commit inicial en `main`, 2026-10-29).
+> **Commits de referencia:** `8ae7442` — `feat: deliver AgroShield demo platform`; `615caea` — `docs: record initial commit and final QA counts`. El hash del commit de cierre de esta ronda se añade al final.
 
 ## 1. Dónde está el proyecto
 
@@ -10,10 +10,10 @@ Registro reanudable de la entrega `0.1.0`. Última actualización: **2026-10-29*
 C:\Users\vcris\OneDrive\Escritorio\AgroShield
 ```
 
-- Rama: `main`; commit inicial `8ae7442`. El árbol de trabajo queda limpio tras registrar este estado.
+- Rama: `main`; commits `8ae7442` y `615caea`. El árbol queda limpio tras el commit de cierre de esta ronda.
 - Workspace pnpm con `backend/`, `frontend/`, `landing/` y `packages/design-tokens/`.
-- Node `24.15.0`, pnpm `11.1.2`.
-- Docker **no disponible** en esta máquina (Docker Desktop requiere UAC).
+- Node `24.15.0`, pnpm `11.1.2`, Docker `29.9.2`, Compose `v5.6.1`.
+- Stack local Docker funcionando en `http://localhost:8088` (el `8080` del host lo ocupa `httpd.exe`).
 
 ## 2. Estado verificado
 
@@ -31,7 +31,14 @@ C:\Users\vcris\OneDrive\Escritorio\AgroShield
 | Lighthouse móvil demo | 99/100/100/100 | `docs/qa/lighthouse-mobile-demo.json` |
 | Lighthouse escritorio | 100/100/100/100 | `docs/qa/lighthouse-desktop-home.json` |
 | Overflow 320 px | Corregido | `docs/design/evidencia/app-zone-320.png` |
-| Docker / Trivy / Gitleaks | **No ejecutado** | Pendiente de CI |
+| `docker run --rm hello-world` | Correcto | Consola, 2026-10-30 |
+| Compose local/dev/prod | Configuración válida | `docker compose ... config -q` |
+| Build backend/web | Correcto | `agroshield-backend:local`, `agroshield-web:local` |
+| Trivy HIGH/CRITICAL | 0 en ambas imágenes | `pnpm scan:images` |
+| Gitleaks working tree/historial | Limpio | `pnpm scan:secrets` |
+| Smoke de API en Docker | 23/23 | `E2E_API_URL=http://localhost:8088/api` |
+| Stack de producción | **No ejecutado** | Requiere dominio, TLS, secretos y legal |
+| CI en GitHub Actions | **No ejecutado** | No hay remoto |
 
 ## 3. Trabajo pendiente
 
@@ -39,15 +46,16 @@ C:\Users\vcris\OneDrive\Escritorio\AgroShield
 
 - [x] **Crear el commit inicial** en `main` (`8ae7442`) y actualizar este documento con el hash.
 - [ ] **Ejecutar CI completo** (`.github/workflows/ci.yml`): quality, infra, secrets, containers.
-- [ ] **Verificar Docker en un host con Docker Desktop/Engine:**
-  - `docker run --rm hello-world`
-  - `docker compose -f compose.yaml config -q`
-  - `docker compose -f compose.dev.yaml config -q`
-  - `docker compose --env-file infra/env/prod.env -f compose.prod.yaml config -q`
-  - builds de `agroshield-backend` y `agroshield-web`
-  - Trivy HIGH/CRITICAL
-  - Gitleaks working tree e historial
-  - `docker compose -f compose.yaml up -d --build` + smoke + login demo
+- [x] **Verificar Docker en esta máquina (2026-10-30):**
+  - [x] `docker run --rm hello-world`
+  - [x] `docker compose -f compose.yaml config -q`
+  - [x] `docker compose -f compose.dev.yaml config -q`
+  - [x] `compose.prod.yaml config -q` con un env de prueba (sin secretos reales)
+  - [x] builds de `agroshield-backend` y `agroshield-web`
+  - [x] Trivy HIGH/CRITICAL — 0 hallazgos corregibles
+  - [x] Gitleaks working tree e historial — limpio
+  - [x] `docker compose up -d --build` + smoke + login demo — 23/23 en `8088`
+  - Nota: `8080` estaba ocupado por `httpd.exe`; se usó un override temporal no versionado.
 - [ ] **Completar identidad legal y contacto real** en `infra/env/prod.env` y en el build de la landing:
   - `PROD_LEGAL_ENTITY`, `PROD_LEGAL_ADDRESS`, `PROD_SUPPORT_EMAIL`, `PROD_WHATSAPP_NUMBER`
   - revisar `privacidad`, `terminos`, `cookies` con asesoría legal.
@@ -91,8 +99,10 @@ C:\Users\vcris\OneDrive\Escritorio\AgroShield
 | 5 errores de consola en UI QA | Comprobaciones negativas intencionadas (401 anónimo, 403 analítica/CSRF) | No son fallos; `failedRequests` está vacío |
 | `pnpm install` en no-TTY purga `node_modules` | Comportamiento de pnpm | `CI=true pnpm install --frozen-lockfile --prod=false` |
 | Chrome no está en PATH | Playwright usa `channel: 'chrome'` | `CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe` |
-| Caddy no está instalado | Se usó un binario temporal | `CADDY_BIN=%TEMP%\opencode\caddy\caddy.exe` |
-| `make`, `gitleaks`, `trivy` ausentes | Entorno Windows sin esas herramientas | Usar `pnpm stack:*`, `pnpm scan:*` o CI |
+| Caddy no está instalado en el host | La imagen web compila su propio binario `2.11.7`; la validación estática lo omite si no hay `CADDY_BIN` | Usar el contenedor o `CADDY_BIN=...` |
+| `make`, `gitleaks`, `trivy` ausentes en el host | Los escaneos se ejecutan en contenedores fijados por digest | Usar `pnpm scan:*` (requiere Docker) |
+| Puerto `8080` ocupado por `httpd.exe` | El stack local no puede publicar el puerto por defecto | Publicar `8088` con un override local no versionado |
+| Primer escaneo Trivy descarga ~131 MiB | Sin caché local | Se reutiliza el volumen `agroshield-trivy-cache` |
 | `.taste-skill/` y `skills-lock.json` ignorados | Artefactos de tooling, no del producto | No commitear; la dirección está en `docs/design/` |
 | `docs/design/direccion-taste.md` tiene caracteres dañados | Codificación original del generador | La versión legible es `docs/design/DESIGN.md` |
 
@@ -147,15 +157,36 @@ node scripts/ui-qa.mjs
 
 El QA de UI escribe capturas en `docs/design/evidencia/` y resultados en `docs/qa/`. Requiere Chrome y los tres servidores.
 
-### 5.5 Docker (en un host con Docker)
+### 5.5 Docker
+
+El stack verificado sigue levantado en `http://localhost:8088` con el override temporal `C:\Users\vcris\AppData\Local\Temp\opencode\agroshield-local-8088.yaml` (no versionado). Para reproducirlo:
 
 ```powershell
 docker run --rm hello-world
+docker compose --env-file .env -f compose.yaml -f C:\Users\vcris\AppData\Local\Temp\opencode\agroshield-local-8088.yaml up -d --build
+```
+
+Si el `8080` está libre, usa el comando normal:
+
+```powershell
 docker compose --env-file .env -f compose.yaml up -d --build
 # o: pnpm stack:up
 ```
 
-Smoke manual: `http://localhost:8080/`, `/demo`, `/app/`, `/api/health`, `/documentation/json`, login demo.
+Smoke: `http://localhost:8088/`, `/demo`, `/app/`, `/api/health`, `/documentation/json`, login demo. API smoke automatizado:
+
+```powershell
+$env:E2E_API_URL='http://localhost:8088/api'
+node scripts/e2e-smoke.mjs
+Remove-Item Env:E2E_API_URL
+```
+
+Tras el smoke, el seed deja 5 alertas abiertas y crea un lead `[E2E]`; para restaurar la base:
+
+```powershell
+docker compose --env-file .env -f compose.yaml -f C:\Users\vcris\AppData\Local\Temp\opencode\agroshield-local-8088.yaml run --rm seed
+docker exec agroshield-local-db-1 psql -U agroshield -d agroshield -c "delete from leads where name like '%E2E%'; delete from analytics_events;"
+```
 
 ### 5.6 CI
 
@@ -201,7 +232,7 @@ Subir `main` a GitHub y ejecutar el workflow `CI`. Si falla:
 2. **No** commitees `.env`, `infra/env/prod.env`, claves, capturas de debug ni `backend/.data/`.
 3. **No** presentes `learning`, `community` o `billing` como funcionales.
 4. **No** inventes clientes, métricas, testimonios ni resultados agronómicos.
-5. **No** afirmes que Docker/Trivy/Gitleaks se ejecutaron localmente: no fue posible.
+5. **Sí** puedes afirmar que Docker, Trivy y Gitleaks se ejecutaron localmente el 2026-10-30 con los resultados de este documento. **No** afirmes que el stack de producción o CI se hayan ejecutado.
 6. **Sí** actualiza `docs/qa/` y este documento tras cada ronda de verificación.
 7. **Sí** reinicia la API tras `seed` con PGlite.
 8. **Sí** conserva la dirección “un motivo” y los tokens compartidos.
@@ -210,7 +241,7 @@ Subir `main` a GitHub y ejecutar el workflow `CI`. Si falla:
 
 La entrega se considera cerrada cuando:
 
-- El commit inicial está en `main` y CI pasa.
-- El stack Docker arranca en un host con Docker y el smoke pasa.
+- El commit de cierre está en `main` y CI pasa.
+- El stack Docker local arranca y el smoke pasa — **cumplido el 2026-10-30**; falta el stack de producción.
 - La configuración legal/contacto está completa o el sitio sigue marcado como demo.
 - `docs/status/PENDING.md` refleja el hash y el estado real, sin promesas no verificadas.

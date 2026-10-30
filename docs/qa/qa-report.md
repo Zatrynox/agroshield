@@ -14,7 +14,7 @@ Resultados de las pruebas ejecutadas en la máquina de desarrollo. Este informe 
 | Frontend local | Vite en `localhost:5173` |
 | Landing local | Astro en `localhost:4321` |
 | Datos | Seed demo (`agroshield-demo`), 5 alertas abiertas |
-| Docker | **No disponible** (Docker Desktop requiere UAC) |
+| Docker | `29.9.2`, Compose `v5.6.1`; stack local en `http://localhost:8088` |
 
 ## Resumen
 
@@ -30,7 +30,7 @@ Resultados de las pruebas ejecutadas en la máquina de desarrollo. Este informe 
 | Lighthouse móvil home | 97 / 100 / 100 / 100 |
 | Lighthouse móvil demo | 99 / 100 / 100 / 100 |
 | Lighthouse escritorio home | 100 / 100 / 100 / 100 |
-| Docker / Trivy / Gitleaks | **No ejecutado localmente**; cubierto por CI |
+| Docker / Trivy / Gitleaks | **Ejecutado**; Trivy 0 HIGH/CRITICAL, Gitleaks limpio, smoke 23/23 |
 
 ## Pruebas automatizadas
 
@@ -220,9 +220,9 @@ El total incluye un deep link por cada alerta abierta del seed: 73 con las 5 ale
 
 Resultado en `docs/qa/link-check.json`.
 
-## Infraestructura
+## Infraestructura y contenedores
 
-Validado sin Docker:
+Validación estática:
 
 - Los tres Compose renderizan con `node scripts/validate-infra.mjs`.
 - Imágenes fijadas por digest; sin `latest`.
@@ -230,14 +230,34 @@ Validado sin Docker:
 - Caddy local y producción validan con Caddy `2.11.7`.
 - El contrato OpenAPI expone las rutas esperadas.
 
-**No validado localmente:** `docker run --rm hello-world`, builds de imagen, Trivy, Gitleaks y smoke del stack. Motivo: Docker Desktop no se pudo instalar sin elevación UAC. CI (`infra`, `secrets`, `containers`) es la vía de verificación.
+Validación con Docker (2026-10-30):
+
+| Comprobación | Resultado |
+| --- | --- |
+| `docker run --rm hello-world` | Correcto |
+| `compose.yaml config -q` | Correcto |
+| `compose.dev.yaml config -q` | Correcto |
+| `compose.prod.yaml config -q` con env de prueba | Correcto |
+| Build `agroshield-backend:local` | Correcto |
+| Build `agroshield-web:local` | Correcto |
+| Trivy HIGH/CRITICAL corregibles, backend | **0** |
+| Trivy HIGH/CRITICAL corregibles, web | **0** |
+| Gitleaks working tree | Limpio |
+| Gitleaks historial completo | Limpio |
+| Stack local: db, seed, backend y web | Sanos; seed exit 0 |
+| Smoke de API contra `http://localhost:8088/api` | **23/23** |
+
+La imagen web recompila Caddy `2.11.7` con Go `1.27.3` y parchea `go-jose` `4.1.6` y `x/net` `0.60.0`; el binario resultante no tiene file capabilities y arranca con `cap_drop: ALL`. La imagen del backend aplica `apk upgrade` y elimina npm/corepack.
+
+El puerto `8080` del host estaba ocupado por `httpd.exe` (PID 5288), así que el stack se publicó en `8088` con un override temporal no versionado. El stack de producción no se ejecutó: requiere dominio, TLS/ACME, secretos e identidad legal. CI tampoco se ha ejecutado aún.
 
 ## Regresiones y riesgos abiertos
 
 | Riesgo | Impacto | Mitigación |
 | --- | --- | --- |
 | PGlite monoproceso | Datos obsoletos tras `seed` | Reiniciar la API; usar PostgreSQL en Docker |
-| Docker no verificado | El stack podría fallar en el primer arranque | CI construye y levanta el stack |
+| Producción no verificada | TLS/ACME, HSTS y cookies reales podrían fallar | Probar en el host de despliegue antes de abrir |
+| CI no ejecutada | El workflow podría fallar en GitHub | Subir a un remoto y ejecutar los cuatro jobs |
 | Acciones CI por tag | Supply chain | Fijar por SHA como hardening |
 | `script-src 'unsafe-inline'` | CSP menos estricta | Nonces/hashes |
 | Sin E2E en CI | Regresiones de UI | Añadir Playwright al pipeline |
@@ -274,4 +294,4 @@ node scripts/ui-qa.mjs
 
 ## Conclusión
 
-La entrega es funcional y verificable en el host: los flujos críticos persisten, los estados negativos son honestos, la accesibilidad automatizada está limpia y el rendimiento móvil supera el objetivo de 90. Los bloqueos restantes son de lanzamiento (legal, secretos reales, Docker/CI, operación), no fallos conocidos del núcleo.
+La entrega es funcional y verificable en el host: los flujos críticos persisten, los estados negativos son honestos, la accesibilidad automatizada está limpia, el rendimiento móvil supera el objetivo de 90 y el stack Docker local arranca con imágenes sin hallazgos HIGH/CRITICAL. Los bloqueos restantes son de lanzamiento (legal, secretos reales, producción con TLS, CI y operación), no fallos conocidos del núcleo.

@@ -10,6 +10,7 @@ infra/
 │   ├── backend.Dockerfile   API de producción, no-root, multi-stage
 │   ├── web.Dockerfile       landing + app + Caddy, no-root, multi-stage
 │   ├── dev.Dockerfile       imagen de desarrollo con hot reload
+│   ├── caddy-main.go        entrypoint del Caddy recompilado
 │   ├── Caddyfile            routing local HTTP (puerto 8080)
 │   └── Caddyfile.prod       TLS, HSTS y ACME (8080/8443 internos)
 └── env/
@@ -32,7 +33,8 @@ Todas las imágenes base están fijadas por digest:
 | Imagen | Versión |
 | --- | --- |
 | Node | `node:24.15.0-alpine3.22` |
-| Caddy | `caddy:2.11.7-alpine` |
+| Caddy (base y binario) | `caddy:2.11.7-alpine`; binario recompilado `v2.11.7` |
+| Go (build de Caddy) | `golang:1.27.3-alpine3.23` |
 | PostgreSQL | `postgres:17.6-alpine3.22` |
 | Trivy | `aquasec/trivy:0.76.1` |
 | Gitleaks | `zricethezav/gitleaks:v8.30.1` |
@@ -43,6 +45,8 @@ Todas las imágenes base están fijadas por digest:
 - Se eliminan `src`, tests, configs de desarrollo, `.env`, `.data` y cachés.
 - El build falla si faltan `dist/main.js`, `dist/tools/migrate.js`, `dist/tools/seed.js` o `migrations/0001_core.sql`.
 - Runtime Alpine con `tini`, usuario `app` (UID 10001), `HOME=/tmp`, healthcheck contra `/health`.
+- `apk upgrade` en el runtime y eliminación de npm/corepack: solo se ejecuta `node`.
+- `/app/.data/demo-keys` se crea con propietario `app` para que el volumen nombrado del seed no nazca como root.
 - `ENTRYPOINT` usa `tini` para reenviar señales correctamente.
 
 ### Web
@@ -50,6 +54,8 @@ Todas las imágenes base están fijadas por digest:
 - Build de Astro y Vue; el panel se compila con `VITE_PUBLIC_BASE=/app/`.
 - Se comprueba que existen `landing/dist/index.html`, `landing/dist/404.html`, `frontend/dist/index.html` y que el HTML referencia `/app/assets/`.
 - Runtime Caddy con usuario `web` (UID 10001), `curl` para el healthcheck.
+- Caddy no se usa desde el binario de la imagen base: se compila `github.com/caddyserver/caddy/v2@v2.11.7` como dependencia con Go `1.27.3` y se parchean `go-jose` `4.1.6` y `x/net` `0.60.0`. Así se eliminan los CVEs HIGH del binario upstream y se obtiene un binario estático sin file capabilities, compatible con `cap_drop: ALL`.
+- `apk upgrade` en el runtime para incorporar parches de Alpine.
 - Sirve assets con caché inmutable y HTML con `no-cache`.
 
 ### Desarrollo
@@ -180,6 +186,19 @@ pnpm scan             # ambos
 
 `scripts/stack.mjs` envuelve Compose y `docker run --rm hello-world`; `scripts/scan.mjs` envuelve Gitleaks y Trivy.
 
+### Resultados locales (2026-10-30)
+
+- `docker run --rm hello-world`: correcto.
+- `docker compose -f compose.yaml config -q` y `compose.dev.yaml`: correctos.
+- `compose.prod.yaml config -q` con un env de prueba: correcto; el stack real no se levantó.
+- `agroshield-backend:local` y `agroshield-web:local`: construidas correctamente.
+- Trivy `HIGH,CRITICAL --ignore-unfixed`: **0 hallazgos** en ambas imágenes.
+- Gitleaks: **sin hallazgos** en working tree e historial.
+- Smoke de API contra el stack: **23/23**.
+- Caddy del contenedor: `v2.11.7 h1:yj0Y4fYZGPkSvibBJ1sTWE33xC0fxztVyXEW5iIdUT4=`, sin file capabilities.
+
+El puerto `8080` del host estaba ocupado por `httpd.exe`, así que el stack se publicó en `8088` con un override temporal no versionado (ver el README raíz). `scripts/scan.mjs` usa un volumen de caché `agroshield-trivy-cache` y Gitleaks escanea una instantánea de archivos rastreados y no ignorados.
+
 ## CI
 
 `.github/workflows/ci.yml` tiene cuatro jobs:
@@ -189,9 +208,13 @@ pnpm scan             # ambos
 3. **secrets** — falla si hay `.env` versionados y ejecuta Gitleaks sobre working tree e historial.
 4. **containers** — construye backend y web, escanea con Trivy (HIGH/CRITICAL corregibles), levanta el stack local y prueba landing, demo, 404, app, deep link, API, 401, OpenAPI y login demo.
 
+El workflow aún no se ha ejecutado en GitHub Actions porque el repositorio no tiene remoto. La misma secuencia se ejecutó localmente el 2026-10-30 con los resultados de la sección anterior.
+
 ## Limitaciones de esta entrega
 
-- **Docker Desktop no se pudo instalar sin elevación UAC en la máquina de desarrollo.** Por tanto, `hello-world`, builds de imagen, Trivy, Gitleaks y el smoke de Compose **no se ejecutaron localmente**. Los archivos se validaron de forma estática y Caddy 2.11.7 validó ambos Caddyfiles. La verificación real queda en CI.
+- **El stack de producción no se ha ejecutado:** requiere dominio real, TLS/ACME, secretos de producción e identidad legal. El stack local sí está verificado.
+- **CI no se ha ejecutado todavía:** no hay remoto con GitHub Actions. Los cuatro jobs están definidos y el equivalente local pasó.
+- El puerto `8080` de la máquina de desarrollo está ocupado por `httpd.exe`; usa un override a `8088` o libera el puerto.
 - No hay orquestador (Kubernetes/Swarm), registro de imágenes, backup automatizado ni monitorización centralizada.
 - El stack local usa HTTP; solo producción exige HTTPS/HSTS.
 - El certificado de producción depende de que el dominio resuelva al host y de que los puertos 80/443 sean accesibles para ACME.

@@ -2,7 +2,7 @@
 
 AgroShield convierte lecturas de suelo firmadas por sensores en alertas con cuenta atrás y recomendaciones operativas. El objetivo es que una explotación agrícola sepa **qué zona está en riesgo, cuánto queda y qué hacer ahora** sin interpretar una tabla de sensores en bruto.
 
-> **Estado:** entrega funcional `0.1.0` para demo local y revisión. No es un despliegue de producción. Antes de publicar hay que completar la identidad legal, la infraestructura, los canales de contacto y las verificaciones de CI/Docker descritas en [`docs/launch-checklist.md`](docs/launch-checklist.md).
+> **Estado:** entrega funcional `0.1.0` para demo local y revisión. No es un despliegue de producción. El stack Docker local está verificado; antes de publicar hay que completar la identidad legal, la infraestructura de producción, los canales de contacto y la ejecución de CI descritas en [`docs/launch-checklist.md`](docs/launch-checklist.md).
 
 ## Qué incluye esta entrega
 
@@ -13,7 +13,7 @@ AgroShield convierte lecturas de suelo firmadas por sensores en alertas con cuen
 - Aplicación Vue 3 + Vite + Pinia + Vue Router con login, registro, panel protegido, fincas, zonas, alertas, cuenta, estados de carga/error/vacío/offline y sesión caducada.
 - Sitio público Astro con landing, demo, gracias, legal, créditos, 404, sitemap, robots, JSON-LD, consentimiento de analítica y formulario con honeypot + captcha de prueba de trabajo.
 - Tokens de diseño compartidos en `packages/design-tokens`, consumidos por la aplicación y la landing.
-- Infraestructura Docker de desarrollo, local y producción con imágenes no-root, healthchecks, redes privadas, Caddy como único origen, HTTPS en producción, Trivy y Gitleaks en CI.
+- Infraestructura Docker de desarrollo, local y producción con imágenes no-root, healthchecks, redes privadas, Caddy como único origen, HTTPS en producción, Trivy y Gitleaks. El stack local, las imágenes y los escaneos se ejecutaron y verificaron en esta máquina.
 - 77 pruebas automatizadas (41 backend, 13 frontend, 23 landing), 39 comprobaciones de UI, 23 comprobaciones de API en vivo y 0 violaciones de axe en las pantallas auditadas.
 
 ## Estructura del monorepo
@@ -108,7 +108,7 @@ El simulador usa las claves privadas locales creadas por el seed en `backend/.da
 
 ### Stack local autocontenido
 
-Un solo origen en `http://localhost:8080`:
+Un solo origen en `http://localhost:8080` (o el puerto que publiques):
 
 - `/` landing
 - `/app` panel Vue
@@ -127,6 +127,28 @@ El stack local incluye Postgres 17, migraciones, seed y backend; Postgres y el b
 docker compose --env-file .env -f compose.yaml down
 # o: pnpm stack:down
 ```
+
+**Verificado el 2026-10-30:** `docker run --rm hello-world`, configuración de los tres Compose, builds de `agroshield-backend` y `agroshield-web`, Trivy sin hallazgos HIGH/CRITICAL corregibles, Gitleaks limpio en working tree e historial y smoke de API 23/23. En esta máquina el puerto `8080` está ocupado por `httpd.exe`; el stack se levantó en `8088` con un override temporal no versionado. Para reproducirlo, crea un `compose.override.yaml` local:
+
+```yaml
+services:
+  backend:
+    environment:
+      CORS_ORIGINS: http://localhost:8088,http://127.0.0.1:8088
+  web:
+    build:
+      args:
+        PUBLIC_LANDING_URL: http://localhost:8088
+        PUBLIC_APP_URL: http://localhost:8088/app
+    ports: !override
+      - "8088:8080"
+```
+
+```bash
+docker compose --env-file .env -f compose.yaml -f compose.override.yaml up -d --build
+```
+
+La imagen web no usa el binario Caddy de la imagen base: recompila Caddy `2.11.7` con Go `1.27.3` y parchea `go-jose` y `x/net` para eliminar CVEs HIGH. El binario resultante es estático, no tiene file capabilities y funciona con `cap_drop: ALL`.
 
 ### Desarrollo con hot reload
 
@@ -148,7 +170,7 @@ docker compose --env-file infra/env/prod.env -f compose.prod.yaml up -d --build
 
 Producción exige HTTPS, HSTS, cookies seguras, CORS HTTPS, `TRUST_PROXY=true`, `DEMO_MODE=false`, documentación desactivada y secretos reales. Caddy escucha en `8080/8443` dentro del contenedor y Compose publica `80/443`.
 
-> **Limitación del entorno de entrega:** Docker Desktop no pudo instalarse sin elevación UAC en la máquina de desarrollo. Los Dockerfiles, Compose y Caddyfiles se validaron estáticamente y con Caddy 2.11.7, pero `hello-world`, la construcción de imágenes, Trivy y el smoke de Compose se ejecutan en CI. No se afirma que se hayan ejecutado localmente.
+> **Alcance de la verificación:** el stack local y sus imágenes están verificados en esta máquina. El stack de producción **no** se ha ejecutado: requiere un dominio real, TLS/ACME, secretos de producción e identidad legal. CI tampoco se ha ejecutado todavía porque el repositorio no se ha subido a un remoto con GitHub Actions.
 
 ## Comandos útiles
 
@@ -165,7 +187,7 @@ Producción exige HTTPS, HSTS, cookies seguras, CORS HTTPS, `TRUST_PROXY=true`, 
 | `pnpm stack:up` / `down` / `reset` / `logs` / `ps` | Ciclo de vida del stack local |
 | `pnpm stack:seed` / `simulate` | Seed y simulador dentro de Compose |
 | `make check` | Typecheck, tests y build |
-| `make scan` | Gitleaks y Trivy locales (si están instalados) |
+| `make scan` | Gitleaks y Trivy locales vía Docker |
 
 ## Arquitectura
 
@@ -199,7 +221,7 @@ Navegador
 
 ## Seguridad
 
-- Sin secretos versionados: `.env` está ignorado y CI bloquea `.env` reales y escanea con Gitleaks.
+- Sin secretos versionados: `.env` está ignorado, Gitleaks no encontró hallazgos en working tree ni historial el 2026-10-30 y CI bloquea `.env` reales.
 - Argon2id para contraseñas; bloqueo de cuenta tras 5 fallos durante 15 minutos.
 - Cookie `agroshield_session` HttpOnly, SameSite=Lax y Secure en producción; CSRF por sincronización con `x-csrf-token`.
 - RBAC (`owner`, `admin`, `agronomist`, `operator`, `viewer`) y consultas siempre filtradas por organización.
@@ -230,4 +252,4 @@ Detalles y checklist de producción en [`SECURITY.md`](SECURITY.md).
 - El stack local usa HTTP; solo producción exige HTTPS/HSTS.
 - La identidad legal, dirección, correo de soporte y WhatsApp reales deben configurarse por entorno antes de publicar.
 - No hay vídeo de producto; se decidió no fabricar material audiovisual sin recursos reales.
-- Docker, Trivy y Gitleaks no se pudieron ejecutar en la máquina local; CI es la vía de verificación prevista.
+- El stack de producción no se ha ejecutado: falta dominio, TLS/ACME, secretos reales e identidad legal. CI aún no se ha ejecutado porque no hay remoto con GitHub Actions.

@@ -9,6 +9,7 @@
 
 ARG NODE_IMAGE=node:24.15.0-alpine3.22@sha256:b689d4005875ae167178471a7a622ec2909459a3bbb32277260be1971af7a99f
 ARG CADDY_IMAGE=caddy:2.11.7-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+ARG GO_IMAGE=golang:1.27.3-alpine3.23@sha256:8a5046497cda39860b832ffdbe8dd66018a0f05bb01352f533a36e7e2ced66a0
 
 # ---------- build ----------
 FROM ${NODE_IMAGE} AS build
@@ -58,14 +59,34 @@ RUN pnpm --filter @agroshield/landing build \
  && test -f frontend/dist/index.html \
  && grep -q 'src="/app/assets/' frontend/dist/index.html
 
+# ---------- caddy ----------
+# Caddy 2.11.7 ships a Go 1.26.8 binary that Trivy flags with HIGH-severity
+# stdlib, x/net and go-jose CVEs. Build the same release as a module dependency
+# with a patched Go toolchain and dependency set. Keeping Caddy as a dependency
+# (rather than building its source checkout) makes the binary report v2.11.7,
+# so vulnerability scanners assess the actual release instead of a pseudo
+# version. The resulting binary is static and has no file capabilities, which
+# also makes it compatible with `cap_drop: ALL` below.
+FROM ${GO_IMAGE} AS caddy-build
+WORKDIR /src
+RUN go mod init agroshield.local/caddy \
+ && go get github.com/caddyserver/caddy/v2@v2.11.7 \
+ && go get github.com/go-jose/go-jose/v4@v4.1.6 golang.org/x/net@v0.60.0
+COPY infra/docker/caddy-main.go ./main.go
+RUN go mod tidy \
+ && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/caddy .
+
 # ---------- runtime ----------
 FROM ${CADDY_IMAGE} AS runtime
 
-RUN apk add --no-cache curl \
+RUN apk upgrade --no-cache \
+ && apk add --no-cache curl \
  && addgroup -g 10001 -S web \
  && adduser -u 10001 -S -G web -H -s /sbin/nologin web \
  && mkdir -p /srv/landing /srv/app /data/caddy /config/caddy \
  && chown -R web:web /srv /data /config
+
+COPY --from=caddy-build /out/caddy /usr/bin/caddy
 
 COPY --from=build --chown=web:web /workspace/landing/dist/ /srv/landing/
 COPY --from=build --chown=web:web /workspace/frontend/dist/ /srv/app/

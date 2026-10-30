@@ -38,12 +38,23 @@ RUN pnpm --filter @agroshield/backend build \
 # ---------- runtime ----------
 FROM ${NODE_IMAGE} AS runtime
 
-RUN apk add --no-cache tini \
+# Apply Alpine security updates and remove npm/corepack: the runtime only runs
+# `node`, and npm's bundled dependencies are a large, unused attack surface.
+RUN apk upgrade --no-cache \
+ && apk add --no-cache tini \
  && addgroup -g 10001 -S app \
- && adduser -u 10001 -S -G app -H -s /sbin/nologin app
+ && adduser -u 10001 -S -G app -H -s /sbin/nologin app \
+ && rm -rf /usr/local/lib/node_modules/npm \
+      /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 WORKDIR /app
 COPY --from=build --chown=app:app /deploy /app
+
+# The demo seed writes sensor keys into /app/.data. Creating the directory in
+# the image gives the named demo-secrets volume the right owner on first use;
+# without it Docker initializes the volume as root and the non-root seed fails.
+RUN mkdir -p /app/.data/demo-keys && chown -R app:app /app/.data
 
 ENV NODE_ENV=production \
     APP_ENV=production \
