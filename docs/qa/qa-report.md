@@ -1,6 +1,6 @@
 # Informe de QA — AgroShield 0.1.0
 
-Resultados de las pruebas ejecutadas en la máquina de desarrollo. Este informe distingue lo verificado de lo que depende de CI o de un entorno real.
+Resultados de las pruebas ejecutadas en la máquina de desarrollo y en GitHub Actions. Este informe distingue lo verificado de lo que depende de un entorno real.
 
 ## Entorno
 
@@ -249,7 +249,18 @@ Validación con Docker (2026-10-30):
 
 La imagen web recompila Caddy `2.11.7` con Go `1.27.3` y parchea `go-jose` `4.1.6` y `x/net` `0.60.0`; el binario resultante no tiene file capabilities y arranca con `cap_drop: ALL`. La imagen del backend aplica `apk upgrade` y elimina npm/corepack.
 
-El puerto `8080` del host estaba ocupado por `httpd.exe` (PID 5288), así que el stack se publicó en `8088` con un override temporal no versionado. El stack de producción no se ejecutó: requiere dominio, TLS/ACME, secretos e identidad legal. CI tampoco se ha ejecutado aún.
+El puerto `8080` del host estaba ocupado por `httpd.exe` (PID 5288), así que el stack se publicó en `8088` con un override temporal no versionado. El stack de producción no se ejecutó: requiere dominio, TLS/ACME, secretos e identidad legal.
+
+## CI en GitHub Actions
+
+El workflow `CI` del monorepo se ejecutó en `main` el **2026-10-31** (run [`41223672231`](https://github.com/Zatrynox/agroshield/actions/runs/41223672231)) y terminó con **4/4 jobs en verde**:
+
+| Job | Resultado |
+| --- | --- |
+| `quality` | Typecheck, 77 tests y build |
+| `infra` | Render de los tres Compose y validación de Caddy |
+| `secrets` | Gitleaks sobre working tree e historial |
+| `containers` | Build de ambas imágenes, Trivy 0 HIGH/CRITICAL, stack local y smoke 23/23 |
 
 ## Regresiones y riesgos abiertos
 
@@ -257,7 +268,6 @@ El puerto `8080` del host estaba ocupado por `httpd.exe` (PID 5288), así que el
 | --- | --- | --- |
 | PGlite monoproceso | Datos obsoletos tras `seed` | Reiniciar la API; usar PostgreSQL en Docker |
 | Producción no verificada | TLS/ACME, HSTS y cookies reales podrían fallar | Probar en el host de despliegue antes de abrir |
-| CI no ejecutada | El workflow podría fallar en GitHub | Subir a un remoto y ejecutar los cuatro jobs |
 | Acciones CI por tag | Supply chain | Fijar por SHA como hardening |
 | `script-src 'unsafe-inline'` | CSP menos estricta | Nonces/hashes |
 | Sin E2E en CI | Regresiones de UI | Añadir Playwright al pipeline |
@@ -294,4 +304,4 @@ node scripts/ui-qa.mjs
 
 ## Conclusión
 
-La entrega es funcional y verificable en el host: los flujos críticos persisten, los estados negativos son honestos, la accesibilidad automatizada está limpia, el rendimiento móvil supera el objetivo de 90 y el stack Docker local arranca con imágenes sin hallazgos HIGH/CRITICAL. Los bloqueos restantes son de lanzamiento (legal, secretos reales, producción con TLS, CI y operación), no fallos conocidos del núcleo.
+La entrega es funcional y verificable en el host: los flujos críticos persisten, los estados negativos son honestos, la accesibilidad automatizada está limpia, el rendimiento móvil supera el objetivo de 90 y el stack Docker local arranca con imágenes sin hallazgos HIGH/CRITICAL. Los bloqueos restantes son de lanzamiento (legal, secretos reales, producción con TLS y operación), no fallos conocidos del núcleo. CI ya está verificado en verde.

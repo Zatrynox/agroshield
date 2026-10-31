@@ -2,7 +2,7 @@
 
 Lista de comprobaciones para pasar de la demo `0.1.0` a un entorno real. Las casillas marcadas se verificaron en la máquina de desarrollo; las pendientes bloquean o condicionan el lanzamiento.
 
-> **Regla:** no se considera “hecho” nada que solo esté escrito. El stack local, las imágenes, Trivy y Gitleaks se ejecutaron y verificaron el 2026-10-30; el stack de producción y CI siguen pendientes.
+> **Regla:** no se considera “hecho” nada que solo esté escrito. El stack local, las imágenes, Trivy, Gitleaks y CI se ejecutaron y verificaron entre el 2026-10-30 y el 2026-10-31; el stack de producción sigue pendiente.
 
 ## 1. Alcance y producto
 
@@ -94,7 +94,7 @@ Lista de comprobaciones para pasar de la demo `0.1.0` a un entorno real. Las cas
 - [ ] Verificar límites de CPU/memoria bajo carga.
 - [ ] Fijar GitHub Actions por SHA y añadir firma/procedencia de imágenes.
 
-> **Estado local (2026-10-30):** Docker Desktop funciona. `hello-world`, configuración de Compose, builds, Trivy, Gitleaks y el smoke local están ejecutados. El puerto `8080` estaba ocupado por `httpd.exe`, así que el stack se publicó en `8088` con un override temporal no versionado. Quedan pendientes el stack de producción con TLS real, el reinicio/logs y CI.
+> **Estado local (2026-10-31):** Docker Desktop funciona. `hello-world`, configuración de Compose, builds, Trivy, Gitleaks, el smoke local y los cuatro jobs de CI están ejecutados. El puerto `8080` estaba ocupado por `httpd.exe`, así que el stack se publicó en `8088` con un override temporal no versionado. Queda pendiente el stack de producción con TLS real y el reinicio/logs.
 
 ## 7. Datos y operación
 
@@ -139,7 +139,7 @@ Lista de comprobaciones para pasar de la demo `0.1.0` a un entorno real. Las cas
 El lanzamiento puede considerarse listo cuando:
 
 1. Las secciones 2, 3, 5 y 6 están completas y verificadas.
-2. CI pasa en `main` con los cuatro jobs.
+2. CI pasa en `main` con los cuatro jobs. **Verificado el 2026-10-31 (run `41223672231`).**
 3. Existe un dominio con TLS válido, backups y monitorización.
 4. Legal ha revisado privacidad, términos, cookies y tratamiento de datos.
 5. Se ha ejecutado el smoke de producción y el login demo (o una cuenta real) funciona.
@@ -151,8 +151,8 @@ El lanzamiento puede considerarse listo cuando:
 | Fecha | Entorno | Resultado | Notas |
 | --- | --- | --- | --- |
 | 2026-10-29 | Host local (Windows, Node 24.15.0) | Typecheck, 77 tests, build, 73 enlaces, 23 API, 39 UI, axe 0, Lighthouse OK | Docker/Trivy/Gitleaks no disponibles |
-| 2026-10-30 | Host local + Docker 29.9.2 / Compose v5.6.1 | Typecheck, lint, 77 tests, build, 73 enlaces, 23 API, hello-world, 3 Compose, builds, Trivy 0, Gitleaks limpio | Stack local en `8088` por conflicto con `httpd.exe`; producción y CI pendientes |
-| pendiente | CI | — | Ejecutar workflow completo |
+| 2026-10-30 | Host local + Docker 29.9.2 / Compose v5.6.1 | Typecheck, lint, 77 tests, build, 73 enlaces, 23 API, hello-world, 3 Compose, builds, Trivy 0, Gitleaks limpio | Stack local en `8088` por conflicto con `httpd.exe`; producción pendiente |
+| 2026-10-31 | GitHub Actions (run `41223672231`) | 4/4 jobs: quality, infra, secrets, containers; Trivy 0 y smoke 23/23 | Publicado en `Zatrynox/agroshield` |
 | pendiente | Producción | — | Requiere dominio, secretos y legal |
 
 Actualiza esta tabla al repetir las comprobaciones; no borres las filas anteriores.

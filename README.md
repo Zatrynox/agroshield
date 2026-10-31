@@ -1,8 +1,30 @@
 # AgroShield
 
+[![CI](https://github.com/Zatrynox/agroshield/actions/workflows/ci.yml/badge.svg)](https://github.com/Zatrynox/agroshield/actions/workflows/ci.yml)
+[![Node](https://img.shields.io/badge/node-%3E%3D22-24543a)](https://nodejs.org/)
+[![Estado](https://img.shields.io/badge/estado-demo%20local-c18b2f)](docs/status/PENDING.md)
+
 AgroShield convierte lecturas de suelo firmadas por sensores en alertas con cuenta atrás y recomendaciones operativas. El objetivo es que una explotación agrícola sepa **qué zona está en riesgo, cuánto queda y qué hacer ahora** sin interpretar una tabla de sensores en bruto.
 
-> **Estado:** entrega funcional `0.1.0` para demo local y revisión. No es un despliegue de producción. El stack Docker local está verificado; antes de publicar hay que completar la identidad legal, la infraestructura de producción, los canales de contacto y la ejecución de CI descritas en [`docs/launch-checklist.md`](docs/launch-checklist.md).
+| Landing | Panel |
+| --- | --- |
+| ![Landing de AgroShield](docs/design/evidencia/landing-home-1440.png) | ![Panel de AgroShield](docs/design/evidencia/app-dashboard-1440.png) |
+
+> **Estado:** entrega funcional `0.1.0` para demo local y revisión. No es un despliegue de producción. El stack Docker local y CI están verificados (4/4 jobs en verde el 2026-10-31); antes de publicar hay que completar la identidad legal, la infraestructura de producción y los canales de contacto descritos en [`docs/launch-checklist.md`](docs/launch-checklist.md).
+
+## Repositorios
+
+El monorepo es la fuente de verdad. Cada superficie se publica también como repositorio independiente, con CI propia y las piezas compartidas necesarias para compilar por separado.
+
+| Repositorio | Contenido | Verificación |
+| --- | --- | --- |
+| [`agroshield`](https://github.com/Zatrynox/agroshield) | Monorepo completo, Compose, QA y documentación | CI 4/4 |
+| [`agroshield-backend`](https://github.com/Zatrynox/agroshield-backend) | API Fastify, dominios, migraciones, seed y simulador | Typecheck, lint, 41 tests, build, Docker |
+| [`agroshield-frontend`](https://github.com/Zatrynox/agroshield-frontend) | Panel Vue 3 + Vite + Pinia + Router | Typecheck, 13 tests, build |
+| [`agroshield-landing`](https://github.com/Zatrynox/agroshield-landing) | Sitio público Astro, demo, legal y SEO | Typecheck, 23 tests, build |
+| [`agroshield-design-tokens`](https://github.com/Zatrynox/agroshield-design-tokens) | Tokens CSS, tipografía y utilidades visuales | Typecheck |
+| [`agroshield-infra`](https://github.com/Zatrynox/agroshield-infra) | Dockerfiles, Compose y Caddy | Validación estática, Compose y Caddy |
+| [`agroshield-docs`](https://github.com/Zatrynox/agroshield-docs) | Diseño, QA, checklist y estado | Enlaces relativos |
 
 ## Qué incluye esta entrega
 
@@ -170,7 +192,7 @@ docker compose --env-file infra/env/prod.env -f compose.prod.yaml up -d --build
 
 Producción exige HTTPS, HSTS, cookies seguras, CORS HTTPS, `TRUST_PROXY=true`, `DEMO_MODE=false`, documentación desactivada y secretos reales. Caddy escucha en `8080/8443` dentro del contenedor y Compose publica `80/443`.
 
-> **Alcance de la verificación:** el stack local y sus imágenes están verificados en esta máquina. El stack de producción **no** se ha ejecutado: requiere un dominio real, TLS/ACME, secretos de producción e identidad legal. CI tampoco se ha ejecutado todavía porque el repositorio no se ha subido a un remoto con GitHub Actions.
+> **Alcance de la verificación:** el stack local y sus imágenes están verificados en esta máquina. El stack de producción **no** se ha ejecutado: requiere un dominio real, TLS/ACME, secretos de producción e identidad legal. CI se ejecutó en GitHub Actions el 2026-10-31 (run `41223672231`) con los cuatro jobs en verde.
 
 ## Comandos útiles
 
@@ -221,7 +243,7 @@ Navegador
 
 ## Seguridad
 
-- Sin secretos versionados: `.env` está ignorado, Gitleaks no encontró hallazgos en working tree ni historial el 2026-10-30 y CI bloquea `.env` reales.
+- Sin secretos versionados: `.env` está ignorado, Gitleaks no encontró hallazgos en working tree ni historial el 2026-10-30 y CI volvió a ejecutarlo en verde el 2026-10-31.
 - Argon2id para contraseñas; bloqueo de cuenta tras 5 fallos durante 15 minutos.
 - Cookie `agroshield_session` HttpOnly, SameSite=Lax y Secure en producción; CSRF por sincronización con `x-csrf-token`.
 - RBAC (`owner`, `admin`, `agronomist`, `operator`, `viewer`) y consultas siempre filtradas por organización.
@@ -242,6 +264,7 @@ Detalles y checklist de producción en [`SECURITY.md`](SECURITY.md).
 - [`docs/qa/qa-report.md`](docs/qa/qa-report.md) — resultados de pruebas y QA.
 - [`docs/status/PENDING.md`](docs/status/PENDING.md) — trabajo pendiente y cómo reanudarlo.
 - [`backend/README.md`](backend/README.md), [`frontend/README.md`](frontend/README.md), [`landing/README.md`](landing/README.md), [`infra/README.md`](infra/README.md) — guías por superficie.
+- [`agroshield-docs`](https://github.com/Zatrynox/agroshield-docs) — espejo navegable de esta documentación con verificación de enlaces.
 
 ## Limitaciones conocidas
 
@@ -252,4 +275,4 @@ Detalles y checklist de producción en [`SECURITY.md`](SECURITY.md).
 - El stack local usa HTTP; solo producción exige HTTPS/HSTS.
 - La identidad legal, dirección, correo de soporte y WhatsApp reales deben configurarse por entorno antes de publicar.
 - No hay vídeo de producto; se decidió no fabricar material audiovisual sin recursos reales.
-- El stack de producción no se ha ejecutado: falta dominio, TLS/ACME, secretos reales e identidad legal. CI aún no se ha ejecutado porque no hay remoto con GitHub Actions.
+- El stack de producción no se ha ejecutado: falta dominio, TLS/ACME, secretos reales e identidad legal.

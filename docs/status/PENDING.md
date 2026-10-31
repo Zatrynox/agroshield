@@ -1,8 +1,8 @@
 # Estado y trabajo pendiente — AgroShield
 
-Registro reanudable de la entrega `0.1.0`. Última actualización: **2026-10-30**.
+Registro reanudable de la entrega `0.1.0`. Última actualización: **2026-10-31**.
 
-> **Commits de referencia:** `8ae7442` — `feat: deliver AgroShield demo platform`; `615caea` — `docs: record initial commit and final QA counts`; `0c41d3a` — `fix: harden containers and record Docker verification` (cierre de la ronda Docker).
+> **Commits de referencia:** `8ae7442` — `feat: deliver AgroShield demo platform`; `615caea` — `docs: record initial commit and final QA counts`; `0c41d3a` — `fix: harden containers and record Docker verification` (cierre de la ronda Docker); `8a84341` — `docs: record final Docker verification` (último commit antes de publicar los repositorios).
 
 ## 1. Dónde está el proyecto
 
@@ -10,10 +10,12 @@ Registro reanudable de la entrega `0.1.0`. Última actualización: **2026-10-30*
 C:\Users\vcris\OneDrive\Escritorio\AgroShield
 ```
 
-- Rama: `main`; commits `8ae7442`, `615caea` y `0c41d3a`. El árbol queda limpio tras el commit de cierre de esta ronda.
+- Rama: `main`; commits `8ae7442`, `615caea`, `0c41d3a` y `8a84341`, más el commit de publicación de los repositorios de componentes. El árbol queda limpio.
+- Remoto: <https://github.com/Zatrynox/agroshield> (público, cuenta personal `Zatrynox`; no existe organización AgroShield).
 - Workspace pnpm con `backend/`, `frontend/`, `landing/` y `packages/design-tokens/`.
 - Node `24.15.0`, pnpm `11.1.2`, Docker `29.9.2`, Compose `v5.6.1`.
 - Stack local Docker funcionando en `http://localhost:8088` (el `8080` del host lo ocupa `httpd.exe`).
+- Repositorios de componentes: `agroshield-backend`, `agroshield-frontend`, `agroshield-landing`, `agroshield-design-tokens`, `agroshield-infra` y `agroshield-docs`, extraídos del monorepo y con CI propia.
 
 ## 2. Estado verificado
 
@@ -38,14 +40,14 @@ C:\Users\vcris\OneDrive\Escritorio\AgroShield
 | Gitleaks working tree/historial | Limpio | `pnpm scan:secrets` |
 | Smoke de API en Docker | 23/23 | `E2E_API_URL=http://localhost:8088/api` |
 | Stack de producción | **No ejecutado** | Requiere dominio, TLS, secretos y legal |
-| CI en GitHub Actions | **No ejecutado** | No hay remoto |
+| CI en GitHub Actions | **4/4 en verde** | Run `41223672231`, 2026-10-31 |
 
 ## 3. Trabajo pendiente
 
 ### P0 — Bloquea el lanzamiento
 
 - [x] **Crear el commit inicial** en `main` (`8ae7442`) y actualizar este documento con el hash.
-- [ ] **Ejecutar CI completo** (`.github/workflows/ci.yml`): quality, infra, secrets, containers.
+- [x] **Ejecutar CI completo** (`.github/workflows/ci.yml`): quality, infra, secrets y containers en verde (run `41223672231`, 2026-10-31).
 - [x] **Verificar Docker en esta máquina (2026-10-30):**
   - [x] `docker run --rm hello-world`
   - [x] `docker compose -f compose.yaml config -q`
@@ -190,7 +192,14 @@ docker exec agroshield-local-db-1 psql -U agroshield -d agroshield -c "delete fr
 
 ### 5.6 CI
 
-Subir `main` a GitHub y ejecutar el workflow `CI`. Si falla:
+El workflow `CI` ya se ejecutó en `main` el 2026-10-31 (run `41223672231`) con los cuatro jobs en verde: `quality`, `infra`, `secrets` y `containers`. Para volver a lanzarlo:
+
+```powershell
+gh workflow run ci.yml
+gh run watch
+```
+
+Si falla:
 
 1. `quality`: revisar typecheck/tests/build.
 2. `infra`: revisar render de Compose y Caddy.
