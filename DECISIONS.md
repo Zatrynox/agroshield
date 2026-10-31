@@ -10,7 +10,7 @@ Registro de las decisiones que sostienen la entrega `0.1.0`. Cada entrada indica
 
 **Decisión:** entregar una demo funcional y honesta, con datos sembrados explícitamente etiquetados, límites documentados y un checklist de lanzamiento. No se inventan clientes, métricas, testimonios ni resultados agronómicos.
 
-**Consecuencia:** el stack local, las imágenes, Trivy y Gitleaks se verificaron en la máquina; lo que sigue sin verificar (TLS real, producción, CI) queda declarado como pendiente, no como hecho.
+**Consecuencia:** el stack local, las imágenes, Trivy, Gitleaks y CI se verificaron; lo que sigue sin verificar (TLS real y producción) queda declarado como pendiente, no como hecho.
 
 ### D2. Contextos implementados y contextos ausentes
 
@@ -206,13 +206,13 @@ Registro de las decisiones que sostienen la entrega `0.1.0`. Cada entrada indica
 
 **Consecuencia:** el QA de UI requiere seed, tres servidores y Chrome; no corre en CI de calidad. Los smoke de API y UI son locales; CI cubre build, tests, infra y el stack Docker.
 
-### D26. Docker local verificado; producción y CI pendientes
+### D26. Docker local y CI verificados; producción pendiente
 
 **Contexto:** Docker Desktop se pudo arrancar, pero el puerto `8080` del host está ocupado por `httpd.exe` y no hay dominio, TLS ni secretos de producción.
 
 **Decisión:** verificar el stack local completo (hello-world, Compose, builds, Trivy, Gitleaks y smoke) publicando el puerto `8088` con un override temporal no versionado. Mantener `8080` como puerto por defecto en `compose.yaml`. No ejecutar el stack de producción.
 
-**Consecuencia:** el stack local y las imágenes están verificados; el `8088` es una particularidad del host, no del repositorio. El stack de producción y CI siguen siendo la fuente de verdad pendiente para el lanzamiento.
+**Consecuencia:** el stack local y las imágenes están verificados; el `8088` es una particularidad del host, no del repositorio. CI se ejecutó en GitHub Actions el 2026-10-31 (run `41223672231`, 4/4 jobs en verde). El stack de producción sigue siendo la verificación pendiente para el lanzamiento.
 
 ### D27. Imágenes fijadas por digest y CI con acciones por tag
 

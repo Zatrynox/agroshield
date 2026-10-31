@@ -208,12 +208,11 @@ El puerto `8080` del host estaba ocupado por `httpd.exe`, así que el stack se p
 3. **secrets** — falla si hay `.env` versionados y ejecuta Gitleaks sobre working tree e historial.
 4. **containers** — construye backend y web, escanea con Trivy (HIGH/CRITICAL corregibles), levanta el stack local y prueba landing, demo, 404, app, deep link, API, 401, OpenAPI y login demo.
 
-El workflow aún no se ha ejecutado en GitHub Actions porque el repositorio no tiene remoto. La misma secuencia se ejecutó localmente el 2026-10-30 con los resultados de la sección anterior.
+El workflow se ejecutó en GitHub Actions el **2026-10-31** (run `41223672231`) y los cuatro jobs terminaron en verde, incluidos los escaneos y el smoke del stack.
 
 ## Limitaciones de esta entrega
 
-- **El stack de producción no se ha ejecutado:** requiere dominio real, TLS/ACME, secretos de producción e identidad legal. El stack local sí está verificado.
-- **CI no se ha ejecutado todavía:** no hay remoto con GitHub Actions. Los cuatro jobs están definidos y el equivalente local pasó.
+- **El stack de producción no se ha ejecutado:** requiere dominio real, TLS/ACME, secretos de producción e identidad legal. CI y el stack local sí están verificados.
 - El puerto `8080` de la máquina de desarrollo está ocupado por `httpd.exe`; usa un override a `8088` o libera el puerto.
 - No hay orquestador (Kubernetes/Swarm), registro de imágenes, backup automatizado ni monitorización centralizada.
 - El stack local usa HTTP; solo producción exige HTTPS/HSTS.
